@@ -1,5 +1,5 @@
 use core::{BackendChannel, BackendEvent, MessageContent};
-use std::convert::Into;
+use serde_json::Value;
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum BackendType {
@@ -8,15 +8,20 @@ pub enum BackendType {
     Discord,
 }
 
-pub trait BotBackend {
-    type LoginData;
-    type ChannelName;
-    type Error;
+quick_error! {
+    #[derive(Debug)]
+    pub enum BackendError {
+        LoginDataInvalid {}
+    }
+}
 
+pub type BackendResult<T> = Result<T, BackendError>;
+
+pub trait BotBackend {
     fn get_type(&self) -> BackendType;
-    fn connect(&mut self, login_data: Self::LoginData) -> Result<(), Self::Error>;
-    fn join<T: Into<Self::ChannelName>>(&mut self, channel: T) -> Result<(), Self::Error>;
-    fn send(&mut self, dst: BackendChannel, msg: MessageContent) -> Result<(), Self::Error>;
-    fn reconnect(&mut self) -> Result<(), Self::Error>;
-    fn get_event(&mut self) -> Result<Option<BackendEvent>, Self::Error>;
+    fn connect(&mut self, login_data: Value) -> BackendResult<()>;
+    fn join(&mut self, channel: &str) -> BackendResult<()>;
+    fn send(&mut self, dst: BackendChannel, msg: MessageContent) -> BackendResult<()>;
+    fn reconnect(&mut self) -> BackendResult<()>;
+    fn get_event(&mut self) -> BackendResult<Option<BackendEvent>>;
 }
