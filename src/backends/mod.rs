@@ -1,11 +1,19 @@
 use core::{BackendChannel, BackendEvent, MessageContent};
 use std::convert::Into;
 
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub enum BackendType {
+    Irc,
+    Slack,
+    Discord,
+}
+
 pub trait BotBackend {
     type LoginData;
     type ChannelName;
     type Error;
 
+    fn get_type(&self) -> BackendType;
     fn connect(&mut self, login_data: Self::LoginData) -> Result<(), Self::Error>;
     fn join<T: Into<Self::ChannelName>>(&mut self, channel: T) -> Result<(), Self::Error>;
     fn send(&mut self, dst: BackendChannel, msg: MessageContent) -> Result<(), Self::Error>;
