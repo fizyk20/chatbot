@@ -13,6 +13,9 @@ mod core;
 mod logger;
 mod plugin;
 
+use config::CONFIG;
+
 fn main() {
     println!("Hello, world!");
+    println!("command_char: {}", CONFIG.lock().unwrap().command_char);
 }

@@ -26,7 +26,10 @@ pub struct ConfigInner {
 impl Config {
     pub fn new<P: AsRef<Path>>(path: P) -> Config {
         let path_buf = path.as_ref().to_path_buf();
-        let mut file = fs::File::open(path).ok().unwrap();
+        let mut file = fs::File::open(path).ok().expect(&format!(
+            "Couldn't open file {:?}",
+            path_buf
+        ));
         let mut config = String::new();
         file.read_to_string(&mut config).expect(
             "Couldn't read from file",
@@ -38,7 +41,10 @@ impl Config {
     }
 
     pub fn save(&self) {
-        let mut file = fs::File::create(&self.path).ok().unwrap();
+        let mut file = fs::File::create(&self.path).ok().expect(&format!(
+            "Couldn't create file {:?}",
+            self.path
+        ));
         let json = serde_json::to_string(&self.inner).unwrap();
         let _ = file.write(json.as_bytes());
     }
