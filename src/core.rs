@@ -1,5 +1,5 @@
 #[derive(Clone, Copy, Debug)]
-pub struct BackendId(usize);
+pub struct BackendId(pub usize);
 
 #[derive(Clone, Debug)]
 pub enum BackendChannel {
@@ -10,8 +10,8 @@ pub enum BackendChannel {
 
 #[derive(Clone, Debug)]
 pub struct Channel {
-    backend: BackendId,
-    dst: BackendChannel,
+    pub backend: BackendId,
+    pub dst: BackendChannel,
 }
 
 #[derive(Clone, Debug)]
@@ -42,6 +42,14 @@ pub enum BackendEvent {
 
 #[derive(Clone, Debug)]
 pub struct Event {
-    backend: BackendId,
-    event: BackendEvent,
+    pub backend: BackendId,
+    pub event: BackendEvent,
+}
+
+#[derive(Clone, Debug)]
+pub enum BackendCommand {
+    SendMessage {
+        to: BackendChannel,
+        msg: MessageContent,
+    },
 }
