@@ -2,6 +2,8 @@ use core::{BackendChannel, BackendId, Event, MessageContent};
 use serde_json::Value;
 use std::sync::mpsc::Sender;
 
+pub mod irc;
+
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum BackendType {
     Irc,
