@@ -1,3 +1,5 @@
+
+use plugins::PluginType;
 use serde_json::{self, Value};
 use sources::SourceType;
 use std::fs;
@@ -21,12 +23,20 @@ pub struct SourceDef {
     pub config: Option<Value>,
 }
 
+/// A definition of a plugin
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct PluginDef {
+    pub plugin_type: PluginType,
+    pub config: Option<Value>,
+}
+
 /// Inner structure with configuration data, read by Serde from a file
 /// in JSON format
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ConfigInner {
     pub command_char: String,
     pub sources: Vec<SourceDef>,
+    pub plugins: Vec<PluginDef>,
 }
 
 impl Config {

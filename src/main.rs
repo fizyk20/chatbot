@@ -12,7 +12,7 @@ mod sources;
 mod config;
 mod core;
 mod logger;
-mod plugin;
+mod plugins;
 
 use core::BotCore;
 
