@@ -1,42 +1,42 @@
-use backends::*;
 use config::CONFIG;
-use core::{BackendId, Event};
+use core::{SourceEvent, SourceId};
+use sources::*;
 use std::collections::HashMap;
 use std::sync::mpsc::{Receiver, channel};
 
 pub struct BotCore {
-    event_rx: Receiver<Event>,
-    backends: HashMap<BackendId, Box<BotBackend>>,
+    event_rx: Receiver<SourceEvent>,
+    sources: HashMap<SourceId, Box<EventSource>>,
 }
 
 impl BotCore {
     pub fn new() -> Self {
         let (sender, receiver) = channel();
-        let backends_def = &CONFIG.lock().unwrap().backends;
-        let mut backends: HashMap<BackendId, Box<BotBackend>> = HashMap::new();
-        for def in backends_def {
-            let backend_id = BackendId(def.backend_id.clone());
-            let backend = match def.backend_type {
-                BackendType::Irc => {
-                    IrcBackend::build_backend(
-                        backend_id.clone(),
+        let sources_def = &CONFIG.lock().unwrap().sources;
+        let mut sources: HashMap<SourceId, Box<EventSource>> = HashMap::new();
+        for def in sources_def {
+            let source_id = SourceId(def.source_id.clone());
+            let source = match def.source_type {
+                SourceType::Irc => {
+                    IrcSource::build_source(
+                        source_id.clone(),
                         sender.clone(),
                         Some(def.config.clone()),
                     )
                 }
                 _ => unreachable!(),
             };
-            backends.insert(backend_id, Box::new(backend));
+            sources.insert(source_id, Box::new(source));
         }
         BotCore {
             event_rx: receiver,
-            backends,
+            sources,
         }
     }
 
     pub fn connect_all(&mut self) {
-        for (_, backend) in self.backends.iter_mut() {
-            backend.connect().unwrap();
+        for (_, source) in self.sources.iter_mut() {
+            source.connect().unwrap();
         }
     }
 

@@ -1,5 +1,5 @@
-use backends::BackendType;
 use serde_json::{self, Value};
+use sources::SourceType;
 use std::fs;
 use std::io::{Read, Write};
 use std::ops::{Deref, DerefMut};
@@ -12,16 +12,16 @@ pub struct Config {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BackendDef {
-    pub backend_id: String,
-    pub backend_type: BackendType,
+pub struct SourceDef {
+    pub source_id: String,
+    pub source_type: SourceType,
     pub config: Value,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ConfigInner {
     pub command_char: String,
-    pub backends: Vec<BackendDef>,
+    pub sources: Vec<SourceDef>,
 }
 
 impl Config {

@@ -1,17 +1,18 @@
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct BackendId(pub String);
+pub struct SourceId(pub String);
 
 #[derive(Clone, Debug)]
-pub enum BackendChannel {
+pub enum Channel {
+    None,
     Channel(String),
     User(String),
     Group(Vec<String>),
 }
 
 #[derive(Clone, Debug)]
-pub struct Channel {
-    pub backend: BackendId,
-    pub dst: BackendChannel,
+pub struct SourceChannel {
+    pub source: SourceId,
+    pub channel: Channel,
 }
 
 #[derive(Clone, Debug)]
@@ -29,11 +30,11 @@ pub struct Message {
 }
 
 #[derive(Clone, Debug)]
-pub enum BackendEvent {
+pub enum Event {
     Connected,
     Disconnected,
     ReceivedMessage {
-        channel: BackendChannel,
+        channel: SourceChannel,
         msg: Message,
     },
     UserOnline(String),
@@ -42,15 +43,15 @@ pub enum BackendEvent {
 }
 
 #[derive(Clone, Debug)]
-pub struct Event {
-    pub backend: BackendId,
-    pub event: BackendEvent,
+pub struct SourceEvent {
+    pub source: SourceId,
+    pub event: Event,
 }
 
 #[derive(Clone, Debug)]
-pub enum BackendCommand {
+pub enum SourceCommand {
     SendMessage {
-        to: BackendChannel,
+        to: SourceChannel,
         msg: MessageContent,
     },
 }

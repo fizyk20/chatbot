@@ -8,7 +8,7 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
-mod backends;
+mod sources;
 mod config;
 mod core;
 mod logger;
