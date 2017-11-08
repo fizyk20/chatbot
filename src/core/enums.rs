@@ -42,10 +42,7 @@ pub enum Event {
     Connected,
     Disconnected,
     DirectInput(String),
-    ReceivedMessage {
-        channel: SourceChannel,
-        msg: Message,
-    },
+    ReceivedMessage(Message),
     UserOnline(String),
     UserOffline(String),
     Other(String),

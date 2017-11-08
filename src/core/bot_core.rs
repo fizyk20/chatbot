@@ -1,5 +1,5 @@
 use config::CONFIG;
-use core::{Event, SourceEvent, SourceId};
+use core::{Event, Message, SourceEvent, SourceId};
 use sources::*;
 use std::collections::HashMap;
 use std::sync::mpsc::{Receiver, channel};
@@ -57,20 +57,14 @@ impl BotCore {
         loop {
             let event = self.event_rx.recv();
             if let Ok(event) = event {
-                let source_type =
-                    if let Some(st) = self.sources.get(&event.source).map(
-                        |source| source.get_type(),
-                    )
-                    {
-                        st
-                    } else {
-                        println!("Got an event from an unknown source: {:?}", event.source);
-                        continue;
-                    };
-                match source_type {
-                    SourceType::Stdin => self.handle_stdin(event),
-                    SourceType::Irc => self.handle_irc(event),
-                    _ => unreachable!(),
+                match event.event {
+                    Event::Connected => (),
+                    Event::Disconnected => (),
+                    Event::DirectInput(input) => self.handle_direct_input(event.source, input),
+                    Event::ReceivedMessage(msg) => self.handle_message(event.source, msg),
+                    Event::UserOnline(user) => self.handle_user_online(event.source, user),
+                    Event::UserOffline(user) => self.handle_user_offline(event.source, user),
+                    Event::Other(other) => println!("Other event: {}", other),
                 }
             } else {
                 println!("Channel error! {}", event.unwrap_err());
@@ -78,14 +72,19 @@ impl BotCore {
         }
     }
 
-    fn handle_stdin(&mut self, event: SourceEvent) {
-        match event.event {
-            Event::DirectInput(s) => println!("Got input: {}", s),
-            _ => println!("Got a weird event from stdin: {:?}", event),
-        }
+    fn handle_direct_input(&mut self, src: SourceId, input: String) {
+        println!("Got direct input from {:?}: {}", src, input);
     }
 
-    fn handle_irc(&mut self, event: SourceEvent) {
-        println!("IRC event: {:?}", event.event);
+    fn handle_message(&mut self, src: SourceId, msg: Message) {
+        println!("Got a message from {:?}: {:?}", src, msg);
+    }
+
+    fn handle_user_online(&mut self, src: SourceId, user: String) {
+        println!("User {} came online in {:?}", user, src);
+    }
+
+    fn handle_user_offline(&mut self, src: SourceId, user: String) {
+        println!("User {} went offline in {:?}", user, src);
     }
 }
