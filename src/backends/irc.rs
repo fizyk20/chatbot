@@ -36,7 +36,7 @@ impl BotBackendBuilder for IrcBackend {
         ));
 
         IrcBackend {
-            id: backend_id,
+            id: backend_id.clone(),
             config: serde_json::from_value(config).ok().expect(&format!(
                 "Invalid configuration supplied to IRC backend {:?}",
                 backend_id
@@ -56,15 +56,16 @@ impl BotBackend for IrcBackend {
         let server = IrcServer::from_config(self.config.clone()).unwrap();
         let thread_server = server.clone();
         let thread_sender = self.sender.clone();
-        let backend_id = self.id;
+        let backend_id = self.id.clone();
 
         let handle = thread::spawn(move || {
+            thread_server.identify().unwrap();
             let _ = thread_server.for_each_incoming(|message| {
                 let event = match message.command {
-                    _ => BackendEvent::Connected,
+                    cmd => BackendEvent::Other(format!("{:?}", cmd)),
                 };
                 let _ = thread_sender.send(Event {
-                    backend: backend_id,
+                    backend: backend_id.clone(),
                     event,
                 });
             });

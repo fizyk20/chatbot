@@ -1,4 +1,14 @@
 {
 	"command_char": "!",
-	"backends": []
+	"backends": [
+		{
+			"backend_id": "IRC-Freenode",
+			"backend_type": "Irc",
+			"config": {
+				"nickname": "IrcBot-test",
+				"server": "irc.freenode.net",
+				"channels": ["#test"]
+			}
+		}
+	]
 }

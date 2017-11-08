@@ -11,8 +11,9 @@ pub struct Config {
     inner: ConfigInner,
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BackendDef {
+    pub backend_id: String,
     pub backend_type: BackendType,
     pub config: Value,
 }

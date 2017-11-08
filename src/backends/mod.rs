@@ -4,6 +4,8 @@ use std::sync::mpsc::Sender;
 
 pub mod irc;
 
+pub use self::irc::IrcBackend;
+
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum BackendType {
     Irc,

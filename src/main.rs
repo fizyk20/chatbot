@@ -14,9 +14,10 @@ mod core;
 mod logger;
 mod plugin;
 
-use config::CONFIG;
+use core::BotCore;
 
 fn main() {
-    println!("Hello, world!");
-    println!("command_char: {}", CONFIG.lock().unwrap().command_char);
+    let mut core = BotCore::new();
+    core.connect_all();
+    core.run();
 }

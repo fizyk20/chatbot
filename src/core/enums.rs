@@ -1,5 +1,5 @@
-#[derive(Clone, Copy, Debug)]
-pub struct BackendId(pub usize);
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct BackendId(pub String);
 
 #[derive(Clone, Debug)]
 pub enum BackendChannel {
@@ -38,6 +38,7 @@ pub enum BackendEvent {
     },
     UserOnline(String),
     UserOffline(String),
+    Other(String),
 }
 
 #[derive(Clone, Debug)]
