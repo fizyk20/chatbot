@@ -33,6 +33,7 @@ pub struct Message {
 pub enum Event {
     Connected,
     Disconnected,
+    DirectInput(String),
     ReceivedMessage {
         channel: SourceChannel,
         msg: Message,

@@ -4,8 +4,10 @@ use serde_json::Value;
 use std::sync::mpsc::Sender;
 
 pub mod irc;
+pub mod stdin;
 
 pub use self::irc::IrcSource;
+pub use self::stdin::StdinSource;
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum SourceType {

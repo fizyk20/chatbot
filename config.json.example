@@ -9,6 +9,10 @@
 				"server": "irc.freenode.net",
 				"channels": ["#test"]
 			}
+		},
+		{
+			"source_id": "stdin",
+			"source_type": "Stdin"
 		}
 	]
 }
