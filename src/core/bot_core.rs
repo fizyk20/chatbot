@@ -18,11 +18,7 @@ impl BotCore {
             let source_id = SourceId(def.source_id.clone());
             let source = match def.source_type {
                 SourceType::Irc => {
-                    IrcSource::build_source(
-                        source_id.clone(),
-                        sender.clone(),
-                        Some(def.config.clone()),
-                    )
+                    IrcSource::build_source(source_id.clone(), sender.clone(), def.config.clone())
                 }
                 _ => unreachable!(),
             };

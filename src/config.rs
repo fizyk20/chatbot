@@ -15,7 +15,7 @@ pub struct Config {
 pub struct SourceDef {
     pub source_id: String,
     pub source_type: SourceType,
-    pub config: Value,
+    pub config: Option<Value>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
