@@ -1,6 +1,7 @@
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SourceId(pub String);
 
+/// Different kinds of communication channels
 #[derive(Clone, Debug)]
 pub enum Channel {
     None,
@@ -9,26 +10,33 @@ pub enum Channel {
     Group(Vec<String>),
 }
 
+/// Channel bundled with a source ID
 #[derive(Clone, Debug)]
 pub struct SourceChannel {
     pub source: SourceId,
     pub channel: Channel,
 }
 
+/// Content of a message
 #[derive(Clone, Debug)]
 pub enum MessageContent {
+    /// Simple text message
     Text(String),
+    /// An image - TODO
     Image,
+    /// A /me type message
     Me(String),
 }
 
+/// Message content bundled with the author and the source channel
 #[derive(Clone, Debug)]
 pub struct Message {
     author: String,
-    channel: Channel,
+    channel: SourceChannel,
     content: MessageContent,
 }
 
+/// Type representing events that can be sent by the sources
 #[derive(Clone, Debug)]
 pub enum Event {
     Connected,
@@ -43,16 +51,9 @@ pub enum Event {
     Other(String),
 }
 
+/// The event bundled with the source ID
 #[derive(Clone, Debug)]
 pub struct SourceEvent {
     pub source: SourceId,
     pub event: Event,
-}
-
-#[derive(Clone, Debug)]
-pub enum SourceCommand {
-    SendMessage {
-        to: SourceChannel,
-        msg: MessageContent,
-    },
 }

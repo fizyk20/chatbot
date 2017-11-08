@@ -4,12 +4,16 @@ use sources::*;
 use std::collections::HashMap;
 use std::sync::mpsc::{Receiver, channel};
 
+/// The core of the bot
 pub struct BotCore {
     event_rx: Receiver<SourceEvent>,
     sources: HashMap<SourceId, Box<EventSource>>,
 }
 
 impl BotCore {
+    /// Creates the core
+    /// Sets up the event passing channel, reads the config and
+    /// creates and configures appropriate event sources and plugins
     pub fn new() -> Self {
         let (sender, receiver) = channel();
         let sources_def = &CONFIG.lock().unwrap().sources;
@@ -41,12 +45,14 @@ impl BotCore {
         }
     }
 
+    /// Calls connect() on all sources
     pub fn connect_all(&mut self) {
         for (_, source) in self.sources.iter_mut() {
             source.connect().unwrap();
         }
     }
 
+    /// Runs the event loop, processing them
     pub fn run(&mut self) {
         loop {
             let event = self.event_rx.recv();

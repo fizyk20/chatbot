@@ -9,6 +9,7 @@ pub mod stdin;
 pub use self::irc::IrcSource;
 pub use self::stdin::StdinSource;
 
+/// Types of the supported event sources
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum SourceType {
     Stdin,
@@ -17,6 +18,7 @@ pub enum SourceType {
     Discord,
 }
 
+/// An error type for the application
 quick_error! {
     #[derive(Debug)]
     pub enum SourceError {
@@ -31,16 +33,24 @@ quick_error! {
     }
 }
 
+/// A more concise result type
 pub type SourceResult<T> = Result<T, SourceError>;
 
+/// Trait representing a source of events
 pub trait EventSource {
+    /// Gets the type of the source
     fn get_type(&self) -> SourceType;
+    /// Connects to the source
     fn connect(&mut self) -> SourceResult<()>;
+    /// Joins a channel in the source
     fn join(&mut self, channel: &str) -> SourceResult<()>;
+    /// Sends a message to the source
     fn send(&mut self, dst: Channel, msg: MessageContent) -> SourceResult<()>;
+    /// Reconnects to the source
     fn reconnect(&mut self) -> SourceResult<()>;
 }
 
+/// Trait representing a type capable of creating an event source object
 pub trait EventSourceBuilder {
     type Source: EventSource;
     fn build_source(

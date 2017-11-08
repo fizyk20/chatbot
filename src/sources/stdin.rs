@@ -12,6 +12,7 @@ pub struct StdinSource {
 impl EventSourceBuilder for StdinSource {
     type Source = StdinSource;
 
+    /// Creates the Stdin source - a simple loop sending lines read from the standard input
     fn build_source(source_id: SourceId, sender: Sender<SourceEvent>, _: Option<Value>) -> Self {
         let handle = thread::spawn(move || {
             let stdin = io::stdin();

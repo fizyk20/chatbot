@@ -17,7 +17,10 @@ mod plugin;
 use core::BotCore;
 
 fn main() {
+    // Create a core object
     let mut core = BotCore::new();
+    // Connect all event sources
     core.connect_all();
+    // Run the event processing loop
     core.run();
 }
