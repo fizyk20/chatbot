@@ -1,4 +1,5 @@
 use core::{BackendChannel, BackendId, Event, MessageContent};
+use irc::error::Error as IrcError;
 use serde_json::Value;
 use std::sync::mpsc::Sender;
 
@@ -16,7 +17,13 @@ pub enum BackendType {
 quick_error! {
     #[derive(Debug)]
     pub enum BackendError {
-        LoginDataInvalid {}
+        Disconnected(id: BackendId) {}
+        ConnectionError(id: BackendId, txt: String) {}
+        InvalidChannel(id: BackendId, ch: BackendChannel) {}
+        InvalidMessage(id: BackendId, msg: MessageContent) {}
+        IrcError(err: IrcError) {
+            from()
+        }
     }
 }
 
