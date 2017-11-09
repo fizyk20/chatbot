@@ -1,5 +1,9 @@
-use core::{Channel, Message};
+use core::{BotCoreAPI, Command, Message};
 use serde_json::Value;
+
+mod randomchat;
+
+pub use self::randomchat::RandomChat;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ResumeEventHandling {
@@ -7,19 +11,13 @@ pub enum ResumeEventHandling {
     Resume,
 }
 
-pub enum PluginEvent {
-    None(ResumeEventHandling),
-    Log(String, ResumeEventHandling),
-    Send(Message, ResumeEventHandling),
-}
-
 pub trait Plugin {
-    fn create(config: Option<Value>) -> Self
+    fn create(id: String, config: Option<Value>) -> Self
     where
         Self: Sized;
-    fn plugin_priority(&self, msg: Message) -> i16;
-    fn handle_command(&mut self, user: &str, channel: Channel, params: Vec<String>) -> PluginEvent;
-    fn handle_message(&mut self, data: Message) -> PluginEvent;
+    fn handle_command(&mut self, core: &mut BotCoreAPI, command: Command) -> ResumeEventHandling;
+    fn handle_message(&mut self, core: &mut BotCoreAPI, data: Message) -> ResumeEventHandling;
+    fn handle_timer(&mut self, core: &mut BotCoreAPI, id: String) -> ResumeEventHandling;
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

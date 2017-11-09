@@ -1,8 +1,7 @@
 {
 	"command_char": "!",
-	"sources": [
-		{
-			"source_id": "IRC-Freenode",
+	"sources": {
+		"IRC-Freenode": {
 			"source_type": "Irc",
 			"config": {
 				"nickname": "IrcBot-test",
@@ -10,9 +9,10 @@
 				"channels": ["#test"]
 			}
 		},
-		{
-			"source_id": "stdin",
+		"stdin": {
 			"source_type": "Stdin"
 		}
-	]
+	},
+	"plugins": {
+	}
 }

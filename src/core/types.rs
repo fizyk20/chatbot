@@ -31,9 +31,9 @@ pub enum MessageContent {
 /// Message content bundled with the author and the source channel
 #[derive(Clone, Debug)]
 pub struct Message {
-    author: String,
-    channel: SourceChannel,
-    content: MessageContent,
+    pub author: String,
+    pub channel: SourceChannel,
+    pub content: MessageContent,
 }
 
 /// Type representing events that can be sent by the sources
@@ -45,6 +45,7 @@ pub enum Event {
     ReceivedMessage(Message),
     UserOnline(String),
     UserOffline(String),
+    Timer(String),
     Other(String),
 }
 
@@ -57,6 +58,7 @@ pub enum EventType {
     MeMessage,
     ImageMessage,
     UserStatus,
+    Timer,
 }
 
 /// The event bundled with the source ID
@@ -64,4 +66,11 @@ pub enum EventType {
 pub struct SourceEvent {
     pub source: SourceId,
     pub event: Event,
+}
+
+#[derive(Clone, Debug)]
+pub struct Command {
+    pub sender: String,
+    pub channel: SourceChannel,
+    pub params: Vec<String>,
 }

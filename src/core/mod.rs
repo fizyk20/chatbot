@@ -1,5 +1,5 @@
 mod bot_core;
-mod enums;
+mod types;
 
-pub use self::bot_core::BotCore;
-pub use self::enums::*;
+pub use self::bot_core::{BotCore, BotCoreAPI};
+pub use self::types::*;

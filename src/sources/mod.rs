@@ -38,6 +38,8 @@ pub type SourceResult<T> = Result<T, SourceError>;
 
 /// Trait representing a source of events
 pub trait EventSource {
+    /// Gets the bot's nickname on this source
+    fn get_nick(&self) -> &str;
     /// Gets the type of the source
     fn get_type(&self) -> SourceType;
     /// Connects to the source

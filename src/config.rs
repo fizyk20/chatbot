@@ -19,7 +19,6 @@ pub struct Config {
 /// A definition of an event source
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SourceDef {
-    pub source_id: String,
     pub source_type: SourceType,
     pub config: Option<Value>,
 }
@@ -38,8 +37,8 @@ pub struct PluginDef {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ConfigInner {
     pub command_char: String,
-    pub sources: Vec<SourceDef>,
-    pub plugins: Vec<PluginDef>,
+    pub sources: HashMap<String, SourceDef>,
+    pub plugins: HashMap<String, PluginDef>,
 }
 
 impl Config {

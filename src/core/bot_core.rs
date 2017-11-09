@@ -1,9 +1,11 @@
+use chrono::Duration;
 use config::CONFIG;
 use core::{Event, EventType, Message, SourceEvent, SourceId};
 use plugins::*;
 use sources::*;
 use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::{Receiver, channel};
+use timer::{Guard, MessageTimer};
 
 struct PluginDef {
     object: Box<Plugin>,
@@ -11,11 +13,17 @@ struct PluginDef {
     subscriptions: HashMap<SourceId, HashSet<EventType>>,
 }
 
+pub struct BotCoreAPI {
+    sources: HashMap<SourceId, Box<EventSource>>,
+    timer: MessageTimer<SourceEvent>,
+    timer_guards: HashMap<String, Guard>,
+}
+
 /// The core of the bot
 pub struct BotCore {
     event_rx: Receiver<SourceEvent>,
-    sources: HashMap<SourceId, Box<EventSource>>,
     plugins: Vec<PluginDef>,
+    api: BotCoreAPI,
 }
 
 impl BotCore {
@@ -27,8 +35,8 @@ impl BotCore {
 
         let sources_def = &CONFIG.lock().unwrap().sources;
         let mut sources = HashMap::new();
-        for def in sources_def {
-            let source_id = SourceId(def.source_id.clone());
+        for (id, def) in sources_def {
+            let source_id = SourceId(id.clone());
             let source: Box<EventSource> = match def.source_type {
                 SourceType::Irc => {
                     Box::new(IrcSource::build_source(
@@ -51,9 +59,11 @@ impl BotCore {
 
         let plugins_def = &CONFIG.lock().unwrap().plugins;
         let mut plugins = vec![];
-        for def in plugins_def {
+        for (id, def) in plugins_def {
             let plugin: Box<Plugin> = match def.plugin_type {
-                //PluginType::RandomChat => RandomChat::new(def.config.clone()),
+                PluginType::RandomChat => Box::new(
+                    RandomChat::create(id.clone(), def.config.clone()),
+                ),
                 //PluginType::MessagePasser => MessagePasser::new(def.config.clone()),
                 _ => unimplemented!(),
             };
@@ -67,16 +77,22 @@ impl BotCore {
             });
         }
 
+        let timer = MessageTimer::new(sender.clone());
+
         BotCore {
             event_rx: receiver,
-            sources,
             plugins,
+            api: BotCoreAPI {
+                sources,
+                timer,
+                timer_guards: HashMap::new(),
+            },
         }
     }
 
     /// Calls connect() on all sources
     pub fn connect_all(&mut self) {
-        for (_, source) in self.sources.iter_mut() {
+        for (_, source) in self.api.sources.iter_mut() {
             source.connect().unwrap();
         }
     }
@@ -93,6 +109,7 @@ impl BotCore {
                     Event::ReceivedMessage(msg) => self.handle_message(event.source, msg),
                     Event::UserOnline(user) => self.handle_user_online(event.source, user),
                     Event::UserOffline(user) => self.handle_user_offline(event.source, user),
+                    Event::Timer(id) => self.handle_timer(id),
                     Event::Other(other) => println!("Other event: {}", other),
                 }
             } else {
@@ -115,5 +132,48 @@ impl BotCore {
 
     fn handle_user_offline(&mut self, src: SourceId, user: String) {
         println!("User {} went offline in {:?}", user, src);
+    }
+
+    fn handle_timer(&mut self, id: String) {
+        let subscribing_plugins: Vec<&mut Box<Plugin>> = self.plugins
+            .iter_mut()
+            .filter(|def| {
+                def.subscriptions
+                    .get(&SourceId("core".to_owned()))
+                    .map(|events| events.contains(&EventType::Timer))
+                    .unwrap_or(false)
+            })
+            .map(|def| &mut def.object)
+            .collect();
+        for plugin in subscribing_plugins {
+            if plugin.handle_timer(&mut self.api, id.clone()) == ResumeEventHandling::Stop {
+                break;
+            }
+        }
+    }
+}
+
+impl BotCoreAPI {
+    pub fn get_nick(&self, source_id: &SourceId) -> &str {
+        self.sources
+            .get(&source_id)
+            .map(|source| source.get_nick())
+            .unwrap()
+    }
+
+    pub fn schedule_timer(&mut self, id: String, after: Duration) {
+        let guard = self.timer.schedule_with_delay(
+            after,
+            SourceEvent {
+                source: SourceId("core".to_owned()),
+                event: Event::Timer(id.clone()),
+            },
+        );
+        let _ = self.timer_guards.insert(id, guard);
+    }
+
+    pub fn send(&mut self, msg: Message) -> SourceResult<()> {
+        let source = self.sources.get_mut(&msg.channel.source).unwrap();
+        source.send(msg.channel.channel, msg.content)
     }
 }

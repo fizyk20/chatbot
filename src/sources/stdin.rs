@@ -32,6 +32,10 @@ impl EventSourceBuilder for StdinSource {
 }
 
 impl EventSource for StdinSource {
+    fn get_nick(&self) -> &str {
+        ""
+    }
+
     fn get_type(&self) -> SourceType {
         SourceType::Stdin
     }

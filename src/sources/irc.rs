@@ -13,6 +13,8 @@ enum SourceState {
 
 /// An IRC event source
 pub struct IrcSource {
+    /// bot's nick on the server
+    nick: String,
     /// the source ID
     id: SourceId,
     /// IRC client configuration data
@@ -33,13 +35,15 @@ impl EventSourceBuilder for IrcSource {
         config: Option<Value>,
     ) -> IrcSource {
         let config = config.expect(&format!("No config given for IRC source {:?}!", source_id));
+        let config: Config = serde_json::from_value(config).ok().expect(&format!(
+            "Invalid configuration supplied to IRC source {:?}",
+            source_id
+        ));
 
         IrcSource {
             id: source_id.clone(),
-            config: serde_json::from_value(config).ok().expect(&format!(
-                "Invalid configuration supplied to IRC source {:?}",
-                source_id
-            )),
+            nick: config.nickname().to_owned(),
+            config,
             sender,
             state: SourceState::Disconnected,
         }
@@ -53,6 +57,10 @@ impl From<::irc::client::prelude::Message> for Event {
 }
 
 impl EventSource for IrcSource {
+    fn get_nick(&self) -> &str {
+        &self.nick
+    }
+
     fn get_type(&self) -> SourceType {
         SourceType::Irc
     }
@@ -83,7 +91,7 @@ impl EventSource for IrcSource {
         Ok(())
     }
 
-    fn join(&mut self, channel: &str) -> SourceResult<()> {
+    fn join(&mut self, _channel: &str) -> SourceResult<()> {
         Ok(())
     }
 
@@ -103,7 +111,7 @@ impl EventSource for IrcSource {
             MessageContent::Me(t) => t,
             _ => return Err(SourceError::InvalidMessage(self.id.clone(), msg)),
         };
-        let message = Command::PRIVMSG(target, msg);
+        let message = ::irc::client::prelude::Command::PRIVMSG(target, msg);
         state.send(message)?;
         Ok(())
     }
