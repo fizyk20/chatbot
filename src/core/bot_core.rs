@@ -1,6 +1,7 @@
 use chrono::Duration;
 use config::CONFIG;
 use core::{Event, EventType, Message, SourceEvent, SourceId};
+use logger::*;
 use plugins::*;
 use sources::*;
 use std::collections::{HashMap, HashSet};
@@ -15,6 +16,7 @@ struct PluginDef {
 
 pub struct BotCoreAPI {
     sources: HashMap<SourceId, Box<EventSource>>,
+    logger: Logger,
     timer: MessageTimer<SourceEvent>,
     timer_guards: HashMap<String, Guard>,
 }
@@ -78,12 +80,14 @@ impl BotCore {
         }
 
         let timer = MessageTimer::new(sender.clone());
+        let log_folder = &CONFIG.lock().unwrap().log_folder;
 
         BotCore {
             event_rx: receiver,
             plugins,
             api: BotCoreAPI {
                 sources,
+                logger: Logger::new(log_folder),
                 timer,
                 timer_guards: HashMap::new(),
             },
@@ -134,19 +138,35 @@ impl BotCore {
     }
 
     fn handle_direct_input(&mut self, src: SourceId, input: String) {
-        println!("Got direct input from {:?}: {}", src, input);
+        let _ = self.api.logger.log_with_mode(
+            &src.0,
+            format!("Got direct input from {:?}: {}", src, input),
+            LogMode::Console,
+        );
     }
 
     fn handle_message(&mut self, src: SourceId, msg: Message) {
-        println!("Got a message from {:?}: {:?}", src, msg);
+        let _ = self.api.logger.log_with_mode(
+            &src.0,
+            format!("Got a message from {:?}: {:?}", src, msg),
+            LogMode::Console,
+        );
     }
 
     fn handle_user_online(&mut self, src: SourceId, user: String) {
-        println!("User {} came online in {:?}", user, src);
+        let _ = self.api.logger.log_with_mode(
+            &src.0,
+            format!("User {} came online in {:?}", user, src),
+            LogMode::Console,
+        );
     }
 
     fn handle_user_offline(&mut self, src: SourceId, user: String) {
-        println!("User {} went offline in {:?}", user, src);
+        let _ = self.api.logger.log_with_mode(
+            &src.0,
+            format!("User {} went offline in {:?}", user, src),
+            LogMode::Console,
+        );
     }
 
     fn handle_timer(&mut self, id: String) {
@@ -180,6 +200,10 @@ impl BotCoreAPI {
 
     pub fn send(&mut self, msg: Message) -> SourceResult<()> {
         let source = self.sources.get_mut(&msg.channel.source).unwrap();
+        let _ = self.logger.log(
+            &msg.channel.source.0,
+            msg.content.display_with_nick(source.get_nick()),
+        );
         source.send(msg.channel.channel, msg.content)
     }
 }

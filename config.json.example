@@ -1,5 +1,6 @@
 {
 	"command_char": "!",
+	"log_folder": "logs",
 	"sources": {
 		"IRC-Freenode": {
 			"source_type": "Irc",

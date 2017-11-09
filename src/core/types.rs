@@ -28,6 +28,16 @@ pub enum MessageContent {
     Me(String),
 }
 
+impl MessageContent {
+    pub fn display_with_nick(&self, nick: &str) -> String {
+        match *self {
+            MessageContent::Text(ref txt) => format!("<{}> {}", nick, txt),
+            MessageContent::Me(ref txt) => format!("* {} {}", nick, txt),
+            MessageContent::Image => format!("<{}> [Image]", nick),
+        }
+    }
+}
+
 /// Message content bundled with the author and the source channel
 #[derive(Clone, Debug)]
 pub struct Message {

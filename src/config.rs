@@ -37,6 +37,7 @@ pub struct PluginDef {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ConfigInner {
     pub command_char: String,
+    pub log_folder: String,
     pub sources: HashMap<String, SourceDef>,
     pub plugins: HashMap<String, PluginDef>,
 }

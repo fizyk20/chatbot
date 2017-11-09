@@ -18,13 +18,13 @@ pub struct Logger {
 }
 
 impl Logger {
-    fn gen_path(&self, date: &Date<Local>) -> io::Result<PathBuf> {
+    fn gen_path(&self, source: &str, date: &Date<Local>) -> io::Result<PathBuf> {
         let base_dir = self.base_dir.as_path();
         let year_str = format!("{}", date.format("%Y"));
         let month_str = format!("{}", date.format("%m"));
         let day_str = format!("{}", date.format("%d"));
 
-        let path = base_dir.join(year_str).join(month_str);
+        let path = base_dir.join(source).join(year_str).join(month_str);
         fs::create_dir_all(&path)?;
         Ok(path.join(format!("{}.txt", day_str)))
     }
@@ -38,7 +38,12 @@ impl Logger {
         }
     }
 
-    pub fn log_with_mode<P: AsRef<str>>(&mut self, what: P, mode: LogMode) -> io::Result<()> {
+    pub fn log_with_mode<P: AsRef<str>>(
+        &mut self,
+        source: &str,
+        what: P,
+        mode: LogMode,
+    ) -> io::Result<()> {
         let now = Local::now();
         let now_str = now.format("%Y-%m-%d %H:%M:%S");
         let time_diff = now.signed_duration_since(self.last_log);
@@ -57,7 +62,7 @@ impl Logger {
                 self.day_passed = false;
             }
 
-            let path = self.gen_path(&self.cur_date)?;
+            let path = self.gen_path(source, &self.cur_date)?;
             let mut file = OpenOptions::new().create(true).append(true).open(path)?;
             let what = format!("[{}] {}\n", now_str, what.as_ref());
             file.write_all(what.as_bytes())?;
@@ -67,7 +72,7 @@ impl Logger {
         Ok(())
     }
 
-    pub fn log<P: AsRef<str>>(&mut self, what: P) -> io::Result<()> {
-        self.log_with_mode(what, LogMode::Both)
+    pub fn log<P: AsRef<str>>(&mut self, source: &str, what: P) -> io::Result<()> {
+        self.log_with_mode(source, what, LogMode::Both)
     }
 }
