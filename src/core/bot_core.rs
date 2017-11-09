@@ -118,6 +118,21 @@ impl BotCore {
         }
     }
 
+    fn get_subscribers(plugins: &mut Vec<PluginDef>, event: EventType) -> Vec<&mut Box<Plugin>> {
+        let mut subscribing_plugins: Vec<_> = plugins
+            .iter_mut()
+            .filter(|def| {
+                def.subscriptions
+                    .get(&SourceId("core".to_owned()))
+                    .map(|events| events.contains(&event))
+                    .unwrap_or(false)
+            })
+            .map(|def| (def.priority, &mut def.object))
+            .collect();
+        subscribing_plugins.sort_by_key(|x| x.0);
+        subscribing_plugins.into_iter().map(|x| x.1).collect()
+    }
+
     fn handle_direct_input(&mut self, src: SourceId, input: String) {
         println!("Got direct input from {:?}: {}", src, input);
     }
@@ -135,16 +150,7 @@ impl BotCore {
     }
 
     fn handle_timer(&mut self, id: String) {
-        let subscribing_plugins: Vec<&mut Box<Plugin>> = self.plugins
-            .iter_mut()
-            .filter(|def| {
-                def.subscriptions
-                    .get(&SourceId("core".to_owned()))
-                    .map(|events| events.contains(&EventType::Timer))
-                    .unwrap_or(false)
-            })
-            .map(|def| &mut def.object)
-            .collect();
+        let subscribing_plugins = Self::get_subscribers(&mut self.plugins, EventType::Timer);
         for plugin in subscribing_plugins {
             if plugin.handle_timer(&mut self.api, id.clone()) == ResumeEventHandling::Stop {
                 break;
