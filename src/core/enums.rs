@@ -48,6 +48,17 @@ pub enum Event {
     Other(String),
 }
 
+/// Enum representing types of events
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum EventType {
+    Connection,
+    Command,
+    TextMessage,
+    MeMessage,
+    ImageMessage,
+    UserStatus,
+}
+
 /// The event bundled with the source ID
 #[derive(Clone, Debug)]
 pub struct SourceEvent {

@@ -1,13 +1,21 @@
 use config::CONFIG;
-use core::{Event, Message, SourceEvent, SourceId};
+use core::{Event, EventType, Message, SourceEvent, SourceId};
+use plugins::*;
 use sources::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::{Receiver, channel};
+
+struct PluginDef {
+    object: Box<Plugin>,
+    priority: u8,
+    subscriptions: HashMap<SourceId, HashSet<EventType>>,
+}
 
 /// The core of the bot
 pub struct BotCore {
     event_rx: Receiver<SourceEvent>,
     sources: HashMap<SourceId, Box<EventSource>>,
+    plugins: Vec<PluginDef>,
 }
 
 impl BotCore {
@@ -16,6 +24,7 @@ impl BotCore {
     /// creates and configures appropriate event sources and plugins
     pub fn new() -> Self {
         let (sender, receiver) = channel();
+
         let sources_def = &CONFIG.lock().unwrap().sources;
         let mut sources = HashMap::new();
         for def in sources_def {
@@ -39,9 +48,29 @@ impl BotCore {
             };
             sources.insert(source_id, source);
         }
+
+        let plugins_def = &CONFIG.lock().unwrap().plugins;
+        let mut plugins = vec![];
+        for def in plugins_def {
+            let plugin: Box<Plugin> = match def.plugin_type {
+                //PluginType::RandomChat => RandomChat::new(def.config.clone()),
+                //PluginType::MessagePasser => MessagePasser::new(def.config.clone()),
+                _ => unimplemented!(),
+            };
+            plugins.push(PluginDef {
+                priority: def.priority,
+                subscriptions: def.subscriptions
+                    .iter()
+                    .map(|(id, set)| (SourceId(id.clone()), set.clone()))
+                    .collect(),
+                object: plugin,
+            });
+        }
+
         BotCore {
             event_rx: receiver,
             sources,
+            plugins,
         }
     }
 

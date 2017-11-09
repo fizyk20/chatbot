@@ -1,7 +1,8 @@
-
+use core::EventType;
 use plugins::PluginType;
 use serde_json::{self, Value};
 use sources::SourceType;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::io::{Read, Write};
 use std::ops::{Deref, DerefMut};
@@ -28,6 +29,8 @@ pub struct SourceDef {
 pub struct PluginDef {
     pub plugin_type: PluginType,
     pub config: Option<Value>,
+    pub priority: u8,
+    pub subscriptions: HashMap<String, HashSet<EventType>>,
 }
 
 /// Inner structure with configuration data, read by Serde from a file
