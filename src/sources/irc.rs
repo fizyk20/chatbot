@@ -52,7 +52,23 @@ impl EventSourceBuilder for IrcSource {
 
 impl From<::irc::client::prelude::Message> for Event {
     fn from(msg: ::irc::client::prelude::Message) -> Event {
-        Event::Other(format!("{:?}", msg.command))
+        use irc::client::prelude::Command::*;
+        match msg.command {
+            PRIVMSG(from, txt) => Event::ReceivedMessage(::core::Message {
+                author: msg.prefix
+                    .unwrap_or_else(|| "".to_string())
+                    .chars()
+                    .take_while(|c| *c != '!')
+                    .collect(),
+                channel: if from.starts_with("#") {
+                    Channel::Channel(from)
+                } else {
+                    Channel::User(from)
+                },
+                content: MessageContent::Text(txt),
+            }),
+            _ => Event::Other(format!("{:?}", msg)),
+        }
     }
 }
 
