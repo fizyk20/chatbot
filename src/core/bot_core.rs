@@ -1,6 +1,6 @@
 use chrono::Duration;
 use config::CONFIG;
-use core::{Event, EventType, Message, SourceEvent, SourceId};
+use core::{Event, EventType, Message, MessageContent, SourceEvent, SourceId};
 use logger::*;
 use plugins::*;
 use sources::*;
@@ -146,11 +146,27 @@ impl BotCore {
     }
 
     fn handle_message(&mut self, src: SourceId, msg: Message) {
-        let _ = self.api.logger.log_with_mode(
-            &src.0,
-            format!("Got a message from {:?}: {:?}", src, msg),
-            LogMode::Console,
-        );
+        let subscription = match &msg.content {
+            &MessageContent::Text(_) => EventType::TextMessage,
+            &MessageContent::Image => {
+                self.api
+                    .logger
+                    .log_with_mode(
+                        &src.0,
+                        format!("Got an image - not sure what to do"),
+                        LogMode::Console,
+                    )
+                    .unwrap();
+                EventType::ImageMessage
+            }
+            &MessageContent::Me(_) => EventType::MeMessage,
+        };
+        let subscribers = Self::get_subscribers(&mut self.plugins, subscription);
+        for plugin in subscribers {
+            if plugin.handle_message(&mut self.api, msg.clone()) == ResumeEventHandling::Stop {
+                break;
+            }
+        }
     }
 
     fn handle_user_online(&mut self, src: SourceId, user: String) {
