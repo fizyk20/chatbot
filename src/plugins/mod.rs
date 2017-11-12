@@ -1,4 +1,4 @@
-use core::{BotCoreAPI, Command, Message};
+use core::{BotCoreAPI, SourceEvent};
 use serde_json::Value;
 
 mod randomchat;
@@ -15,9 +15,7 @@ pub trait Plugin {
     fn create(id: String, config: Option<Value>) -> Self
     where
         Self: Sized;
-    fn handle_command(&mut self, core: &mut BotCoreAPI, command: Command) -> ResumeEventHandling;
-    fn handle_message(&mut self, core: &mut BotCoreAPI, data: Message) -> ResumeEventHandling;
-    fn handle_timer(&mut self, core: &mut BotCoreAPI, id: String) -> ResumeEventHandling;
+    fn handle_event(&mut self, core: &mut BotCoreAPI, event: SourceEvent) -> ResumeEventHandling;
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

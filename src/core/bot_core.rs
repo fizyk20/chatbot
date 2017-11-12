@@ -1,6 +1,6 @@
 use chrono::Duration;
 use config::CONFIG;
-use core::{Event, EventType, Message, MessageContent, SourceEvent, SourceId};
+use core::{Event, EventType, Message, SourceEvent, SourceId};
 use logger::*;
 use plugins::*;
 use sources::*;
@@ -35,52 +35,56 @@ impl BotCore {
     pub fn new() -> Self {
         let (sender, receiver) = channel();
 
-        let sources_def = &CONFIG.lock().unwrap().sources;
         let mut sources = HashMap::new();
-        for (id, def) in sources_def {
-            let source_id = SourceId(id.clone());
-            let source: Box<EventSource> = match def.source_type {
-                SourceType::Irc => {
-                    Box::new(IrcSource::build_source(
-                        source_id.clone(),
-                        sender.clone(),
-                        def.config.clone(),
-                    ))
-                }
-                SourceType::Stdin => {
-                    Box::new(StdinSource::build_source(
-                        source_id.clone(),
-                        sender.clone(),
-                        None,
-                    ))
-                }
-                _ => unreachable!(),
-            };
-            sources.insert(source_id, source);
+        {
+            let sources_def = &CONFIG.lock().unwrap().sources;
+            for (id, def) in sources_def {
+                let source_id = SourceId(id.clone());
+                let source: Box<EventSource> = match def.source_type {
+                    SourceType::Irc => {
+                        Box::new(IrcSource::build_source(
+                            source_id.clone(),
+                            sender.clone(),
+                            def.config.clone(),
+                        ))
+                    }
+                    SourceType::Stdin => {
+                        Box::new(StdinSource::build_source(
+                            source_id.clone(),
+                            sender.clone(),
+                            None,
+                        ))
+                    }
+                    _ => unreachable!(),
+                };
+                sources.insert(source_id, source);
+            }
         }
 
-        let plugins_def = &CONFIG.lock().unwrap().plugins;
         let mut plugins = vec![];
-        for (id, def) in plugins_def {
-            let plugin: Box<Plugin> = match def.plugin_type {
-                PluginType::RandomChat => Box::new(
-                    RandomChat::create(id.clone(), def.config.clone()),
-                ),
-                //PluginType::MessagePasser => MessagePasser::new(def.config.clone()),
-                _ => unimplemented!(),
-            };
-            plugins.push(PluginDef {
-                priority: def.priority,
-                subscriptions: def.subscriptions
-                    .iter()
-                    .map(|(id, set)| (SourceId(id.clone()), set.clone()))
-                    .collect(),
-                object: plugin,
-            });
+        {
+            let plugins_def = &CONFIG.lock().unwrap().plugins;
+            for (id, def) in plugins_def {
+                let plugin: Box<Plugin> = match def.plugin_type {
+                    PluginType::RandomChat => Box::new(
+                        RandomChat::create(id.clone(), def.config.clone()),
+                    ),
+                    //PluginType::MessagePasser => MessagePasser::new(def.config.clone()),
+                    _ => unimplemented!(),
+                };
+                plugins.push(PluginDef {
+                    priority: def.priority,
+                    subscriptions: def.subscriptions
+                        .iter()
+                        .map(|(id, set)| (SourceId(id.clone()), set.clone()))
+                        .collect(),
+                    object: plugin,
+                });
+            }
         }
 
         let timer = MessageTimer::new(sender.clone());
-        let log_folder = &CONFIG.lock().unwrap().log_folder;
+        let log_folder = CONFIG.lock().unwrap().log_folder.clone();
 
         BotCore {
             event_rx: receiver,
@@ -107,14 +111,15 @@ impl BotCore {
             let event = self.event_rx.recv();
             if let Ok(event) = event {
                 match event.event {
-                    Event::Connected => (),
-                    Event::Disconnected => (),
-                    Event::DirectInput(input) => self.handle_direct_input(event.source, input),
-                    Event::ReceivedMessage(msg) => self.handle_message(event.source, msg),
-                    Event::UserOnline(user) => self.handle_user_online(event.source, user),
-                    Event::UserOffline(user) => self.handle_user_offline(event.source, user),
-                    Event::Timer(id) => self.handle_timer(id),
-                    Event::Other(other) => println!("Other event: {}", other),
+                    Event::Other(other) => {
+                        self.api
+                            .logger
+                            .log(&event.source.0, format!("Other event: {}", other))
+                            .unwrap();
+                    }
+                    _ => {
+                        self.handle_event(event);
+                    }
                 }
             } else {
                 println!("Channel error! {}", event.unwrap_err());
@@ -137,58 +142,10 @@ impl BotCore {
         subscribing_plugins.into_iter().map(|x| x.1).collect()
     }
 
-    fn handle_direct_input(&mut self, src: SourceId, input: String) {
-        let _ = self.api.logger.log_with_mode(
-            &src.0,
-            format!("Got direct input from {:?}: {}", src, input),
-            LogMode::Console,
-        );
-    }
-
-    fn handle_message(&mut self, src: SourceId, msg: Message) {
-        let subscription = match &msg.content {
-            &MessageContent::Text(_) => EventType::TextMessage,
-            &MessageContent::Image => {
-                self.api
-                    .logger
-                    .log_with_mode(
-                        &src.0,
-                        format!("Got an image - not sure what to do"),
-                        LogMode::Console,
-                    )
-                    .unwrap();
-                EventType::ImageMessage
-            }
-            &MessageContent::Me(_) => EventType::MeMessage,
-        };
-        let subscribers = Self::get_subscribers(&mut self.plugins, subscription);
+    fn handle_event(&mut self, event: SourceEvent) {
+        let subscribers = Self::get_subscribers(&mut self.plugins, event.event.get_type());
         for plugin in subscribers {
-            if plugin.handle_message(&mut self.api, msg.clone()) == ResumeEventHandling::Stop {
-                break;
-            }
-        }
-    }
-
-    fn handle_user_online(&mut self, src: SourceId, user: String) {
-        let _ = self.api.logger.log_with_mode(
-            &src.0,
-            format!("User {} came online in {:?}", user, src),
-            LogMode::Console,
-        );
-    }
-
-    fn handle_user_offline(&mut self, src: SourceId, user: String) {
-        let _ = self.api.logger.log_with_mode(
-            &src.0,
-            format!("User {} went offline in {:?}", user, src),
-            LogMode::Console,
-        );
-    }
-
-    fn handle_timer(&mut self, id: String) {
-        let subscribing_plugins = Self::get_subscribers(&mut self.plugins, EventType::Timer);
-        for plugin in subscribing_plugins {
-            if plugin.handle_timer(&mut self.api, id.clone()) == ResumeEventHandling::Stop {
+            if plugin.handle_event(&mut self.api, event.clone()) == ResumeEventHandling::Stop {
                 break;
             }
         }
@@ -214,12 +171,12 @@ impl BotCoreAPI {
         let _ = self.timer_guards.insert(id, guard);
     }
 
-    pub fn send(&mut self, msg: Message) -> SourceResult<()> {
-        let source = self.sources.get_mut(&msg.channel.source).unwrap();
+    pub fn send(&mut self, source_id: &SourceId, msg: Message) -> SourceResult<()> {
+        let source = self.sources.get_mut(source_id).unwrap();
         let _ = self.logger.log(
-            &msg.channel.source.0,
+            &source_id.0,
             msg.content.display_with_nick(source.get_nick()),
         );
-        source.send(msg.channel.channel, msg.content)
+        source.send(msg.channel, msg.content)
     }
 }

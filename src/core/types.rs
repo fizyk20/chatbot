@@ -10,13 +10,6 @@ pub enum Channel {
     Group(Vec<String>),
 }
 
-/// Channel bundled with a source ID
-#[derive(Clone, Debug)]
-pub struct SourceChannel {
-    pub source: SourceId,
-    pub channel: Channel,
-}
-
 /// Content of a message
 #[derive(Clone, Debug)]
 pub enum MessageContent {
@@ -42,7 +35,7 @@ impl MessageContent {
 #[derive(Clone, Debug)]
 pub struct Message {
     pub author: String,
-    pub channel: SourceChannel,
+    pub channel: Channel,
     pub content: MessageContent,
 }
 
@@ -53,6 +46,7 @@ pub enum Event {
     Disconnected,
     DirectInput(String),
     ReceivedMessage(Message),
+    ReceivedCommand(Command),
     UserOnline(String),
     UserOffline(String),
     Timer(String),
@@ -69,6 +63,28 @@ pub enum EventType {
     ImageMessage,
     UserStatus,
     Timer,
+    Other,
+}
+
+impl Event {
+    pub fn get_type(&self) -> EventType {
+        match *self {
+            Event::Connected | Event::Disconnected => EventType::Connection,
+            Event::DirectInput(_) |
+            Event::ReceivedCommand(_) => EventType::Command,
+            Event::ReceivedMessage(ref msg) => {
+                match msg.content {
+                    MessageContent::Text(_) => EventType::TextMessage,
+                    MessageContent::Me(_) => EventType::MeMessage,
+                    MessageContent::Image => EventType::ImageMessage,
+                }
+            }
+            Event::UserOnline(_) |
+            Event::UserOffline(_) => EventType::UserStatus,
+            Event::Timer(_) => EventType::Timer,
+            Event::Other(_) => EventType::Other,
+        }
+    }
 }
 
 /// The event bundled with the source ID
@@ -81,6 +97,6 @@ pub struct SourceEvent {
 #[derive(Clone, Debug)]
 pub struct Command {
     pub sender: String,
-    pub channel: SourceChannel,
+    pub channel: Channel,
     pub params: Vec<String>,
 }

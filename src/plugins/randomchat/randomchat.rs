@@ -1,7 +1,7 @@
 use super::dictionary::Dictionary;
 use chrono::Duration;
 use config::CONFIG;
-use core::{BotCoreAPI, Command, Message, MessageContent};
+use core::{BotCoreAPI, Command, Event, Message, MessageContent, SourceEvent, SourceId};
 use plugins::{Plugin, ResumeEventHandling};
 use rand::{self, Rng};
 use serde_json::{self, Value};
@@ -46,45 +46,75 @@ impl Plugin for RandomChat {
         }
     }
 
-    fn handle_message(&mut self, core: &mut BotCoreAPI, msg: Message) -> ResumeEventHandling {
+    fn handle_event(&mut self, core: &mut BotCoreAPI, event: SourceEvent) -> ResumeEventHandling {
+        let SourceEvent { source, event } = event;
+        match event {
+            Event::ReceivedMessage(msg) => self.handle_message(core, source, msg),
+            Event::Timer(id) => self.handle_timer(core, id),
+            _ => ResumeEventHandling::Resume,
+        }
+    }
+}
+
+impl RandomChat {
+    fn handle_message(
+        &mut self,
+        core: &mut BotCoreAPI,
+        src: SourceId,
+        msg: Message,
+    ) -> ResumeEventHandling {
         if !self.enabled {
             return ResumeEventHandling::Resume;
         }
         self.init_timer(core);
-        if core.get_nick(&msg.channel.source) != msg.author {
+        if core.get_nick(&src) != msg.author {
             if let MessageContent::Text(txt) = msg.content {
                 self.dict.learn_from_line(txt);
             }
         }
         if rand::thread_rng().gen_range(0, 100) < self.probability {
             let response = self.dict.generate_sentence();
-            core.send(Message {
-                author: "".to_owned(),
-                channel: msg.channel,
-                content: MessageContent::Text(response),
-            }).unwrap();
+            core.send(
+                &src,
+                Message {
+                    author: "".to_owned(),
+                    channel: msg.channel,
+                    content: MessageContent::Text(response),
+                },
+            ).unwrap();
             ResumeEventHandling::Resume
         } else {
             ResumeEventHandling::Resume
         }
     }
 
-    fn handle_command(&mut self, core: &mut BotCoreAPI, command: Command) -> ResumeEventHandling {
+    fn handle_command(
+        &mut self,
+        core: &mut BotCoreAPI,
+        src: SourceId,
+        command: Command,
+    ) -> ResumeEventHandling {
         if command.params[0] == "gadaj" {
             let response = self.dict.generate_sentence();
-            core.send(Message {
-                author: "".to_owned(),
-                channel: command.channel,
-                content: MessageContent::Text(response),
-            }).unwrap();
+            core.send(
+                &src,
+                Message {
+                    author: "".to_owned(),
+                    channel: command.channel,
+                    content: MessageContent::Text(response),
+                },
+            ).unwrap();
             ResumeEventHandling::Stop
         } else if command.params[0] == "random" {
             if command.params.len() < 2 {
-                core.send(Message {
-                    author: "".to_owned(),
-                    channel: command.channel,
-                    content: MessageContent::Text(format!("Not enough parameters")),
-                }).unwrap();
+                core.send(
+                    &src,
+                    Message {
+                        author: "".to_owned(),
+                        channel: command.channel,
+                        content: MessageContent::Text(format!("Not enough parameters")),
+                    },
+                ).unwrap();
                 return ResumeEventHandling::Stop;
             }
             if command.params[1] == "enable" {
@@ -97,11 +127,14 @@ impl Plugin for RandomChat {
                     .config
                     .as_mut()
                     .map(|ref mut config| { config["enabled"] = Value::Bool(true); });
-                core.send(Message {
-                    author: "".to_owned(),
-                    channel: command.channel,
-                    content: MessageContent::Text(format!("RandomChat enabled.")),
-                }).unwrap();
+                core.send(
+                    &src,
+                    Message {
+                        author: "".to_owned(),
+                        channel: command.channel,
+                        content: MessageContent::Text(format!("RandomChat enabled.")),
+                    },
+                ).unwrap();
                 ResumeEventHandling::Stop
             } else if command.params[1] == "disable" {
                 self.enabled = false;
@@ -113,20 +146,27 @@ impl Plugin for RandomChat {
                     .config
                     .as_mut()
                     .map(|ref mut config| { config["enabled"] = Value::Bool(false); });
-                core.send(Message {
-                    author: "".to_owned(),
-                    channel: command.channel,
-                    content: MessageContent::Text(format!("RandomChat disabled.")),
-                }).unwrap();
+                core.send(
+                    &src,
+                    Message {
+                        author: "".to_owned(),
+                        channel: command.channel,
+                        content: MessageContent::Text(format!("RandomChat disabled.")),
+                    },
+                ).unwrap();
                 ResumeEventHandling::Stop
             } else {
-                core.send(Message {
-                    author: "".to_owned(),
-                    channel: command.channel,
-                    content: MessageContent::Text(
-                        format!("Unknown parameter value: {}", command.params[1]).to_string(),
-                    ),
-                }).unwrap();
+                core.send(
+                    &src,
+                    Message {
+                        author: "".to_owned(),
+                        channel: command.channel,
+                        content: MessageContent::Text(
+                            format!("Unknown parameter value: {}", command.params[1])
+                                .to_string(),
+                        ),
+                    },
+                ).unwrap();
                 ResumeEventHandling::Stop
             }
         } else {
