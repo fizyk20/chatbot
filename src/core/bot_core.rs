@@ -1,6 +1,6 @@
 use chrono::Duration;
 use config::CONFIG;
-use core::{Event, EventType, Message, SourceEvent, SourceId};
+use core::{Event, EventType, Message, MessageContent, SourceEvent, SourceId};
 use logger::*;
 use plugins::*;
 use sources::*;
@@ -110,21 +110,29 @@ impl BotCore {
         loop {
             let event = self.event_rx.recv();
             if let Ok(event) = event {
-                match event.event {
-                    Event::Other(other) => {
-                        self.api
-                            .logger
-                            .log(&event.source.0, format!("Other event: {}", other))
-                            .unwrap();
-                    }
-                    _ => {
-                        self.handle_event(event);
-                    }
-                }
+                self.log_event(&event);
+                self.handle_event(event);
             } else {
                 println!("Channel error! {}", event.unwrap_err());
             }
         }
+    }
+
+    fn log_event(&mut self, event: &SourceEvent) {
+        let text = match event.event {
+            Event::ReceivedMessage(ref msg) => {
+                match msg.content {
+                    MessageContent::Text(ref txt) => format!("<{}> {}", msg.author, txt),
+                    MessageContent::Me(ref txt) => {
+                        format!("* {} {}", self.api.get_nick(&event.source), txt)
+                    }
+                    MessageContent::Image => format!("[Image]"),
+                }
+            }
+            Event::Other(ref txt) => txt.clone(),
+            _ => format!("{:?}", event.event),
+        };
+        self.api.logger.log(&event.source.0, text).unwrap();
     }
 
     fn get_subscribers(plugins: &mut Vec<PluginDef>, event: EventType) -> Vec<&mut Box<Plugin>> {

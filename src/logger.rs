@@ -49,7 +49,7 @@ impl Logger {
         let time_diff = now.signed_duration_since(self.last_log);
 
         if mode == LogMode::Console || mode == LogMode::Both {
-            println!("[{}] {}", now_str, what.as_ref());
+            println!("[{}] {}: {}", now_str, source, what.as_ref());
         }
 
         if mode == LogMode::File || mode == LogMode::Both {
