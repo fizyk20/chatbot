@@ -15,5 +15,16 @@
 		}
 	},
 	"plugins": {
+		"randomchat": {
+			"plugin_type": "RandomChat",
+			"priority": 0,
+			"subscriptions": {
+				"core": ["TextMessage"]
+			},
+			"config": {
+				"enabled": true,
+				"probability": 50
+			}
+		}
 	}
 }

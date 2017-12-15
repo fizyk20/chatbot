@@ -76,7 +76,9 @@ impl BotCore {
                     priority: def.priority,
                     subscriptions: def.subscriptions
                         .iter()
-                        .map(|(id, set)| (SourceId(id.clone()), set.clone()))
+                        .map(|(id, set)| {
+                            (SourceId(id.clone()), set.iter().cloned().collect())
+                        })
                         .collect(),
                     object: plugin,
                 });

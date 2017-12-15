@@ -49,7 +49,11 @@ impl Plugin for RandomChat {
     fn handle_event(&mut self, core: &mut BotCoreAPI, event: SourceEvent) -> ResumeEventHandling {
         let SourceEvent { source, event } = event;
         match event {
-            Event::ReceivedMessage(msg) => self.handle_message(core, source, msg),
+            Event::ReceivedMessage(msg) => if let Some(cmd) = msg.parse_command() {
+                self.handle_command(core, source, cmd)
+            } else {
+                self.handle_message(core, source, msg)
+            }
             Event::Timer(id) => self.handle_timer(core, id),
             _ => ResumeEventHandling::Resume,
         }

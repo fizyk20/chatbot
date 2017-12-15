@@ -1,3 +1,5 @@
+use config::CONFIG;
+
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SourceId(pub String);
 
@@ -39,6 +41,33 @@ pub struct Message {
     pub content: MessageContent,
 }
 
+#[derive(Clone, Debug)]
+pub struct Command {
+    pub sender: String,
+    pub channel: Channel,
+    pub params: Vec<String>,
+}
+
+impl Message {
+    pub fn parse_command(&self) -> Option<Command> {
+        if let MessageContent::Text(txt) = self.content.clone() {
+            let cmd_char = CONFIG.lock().unwrap().command_char.clone();
+            if !txt.starts_with(&cmd_char) {
+                return None;
+            }
+            let text = &txt[cmd_char.len()..];
+            let words = text.split(" ");
+            Some(Command {
+                sender: self.author.clone(),
+                channel: self.channel.clone(),
+                params: words.into_iter().map(str::to_owned).collect(),
+            })
+        } else {
+            None
+        }
+    }
+}
+
 /// Type representing events that can be sent by the sources
 #[derive(Clone, Debug)]
 pub enum Event {
@@ -46,7 +75,6 @@ pub enum Event {
     Disconnected,
     DirectInput(String),
     ReceivedMessage(Message),
-    ReceivedCommand(Command),
     UserOnline(String),
     UserOffline(String),
     Timer(String),
@@ -57,7 +85,6 @@ pub enum Event {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EventType {
     Connection,
-    Command,
     TextMessage,
     MeMessage,
     ImageMessage,
@@ -70,8 +97,7 @@ impl Event {
     pub fn get_type(&self) -> EventType {
         match *self {
             Event::Connected | Event::Disconnected => EventType::Connection,
-            Event::DirectInput(_) |
-            Event::ReceivedCommand(_) => EventType::Command,
+            Event::DirectInput(_) => EventType::TextMessage,
             Event::ReceivedMessage(ref msg) => {
                 match msg.content {
                     MessageContent::Text(_) => EventType::TextMessage,
@@ -92,11 +118,4 @@ impl Event {
 pub struct SourceEvent {
     pub source: SourceId,
     pub event: Event,
-}
-
-#[derive(Clone, Debug)]
-pub struct Command {
-    pub sender: String,
-    pub channel: Channel,
-    pub params: Vec<String>,
 }
