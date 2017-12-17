@@ -137,12 +137,16 @@ impl BotCore {
         self.api.logger.log(&event.source.0, text).unwrap();
     }
 
-    fn get_subscribers(plugins: &mut Vec<PluginDef>, event: EventType) -> Vec<&mut Box<Plugin>> {
+    fn get_subscribers<'a, 'b>(
+        source_id: &'a SourceId,
+        plugins: &'b mut Vec<PluginDef>,
+        event: EventType,
+    ) -> Vec<&'b mut Box<Plugin>> {
         let mut subscribing_plugins: Vec<_> = plugins
             .iter_mut()
             .filter(|def| {
                 def.subscriptions
-                    .get(&SourceId("core".to_owned()))
+                    .get(&source_id)
                     .map(|events| events.contains(&event))
                     .unwrap_or(false)
             })
@@ -153,7 +157,8 @@ impl BotCore {
     }
 
     fn handle_event(&mut self, event: SourceEvent) {
-        let subscribers = Self::get_subscribers(&mut self.plugins, event.event.get_type());
+        let subscribers =
+            Self::get_subscribers(&event.source, &mut self.plugins, event.event.get_type());
         for plugin in subscribers {
             if plugin.handle_event(&mut self.api, event.clone()) == ResumeEventHandling::Stop {
                 break;
