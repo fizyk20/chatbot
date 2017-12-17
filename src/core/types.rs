@@ -76,7 +76,8 @@ pub enum Event {
     DirectInput(String),
     ReceivedMessage(Message),
     UserOnline(String),
-    UserOffline(String),
+    UserOffline(String, Option<String>),
+    NickChange(String, String),
     Timer(String),
     Other(String),
 }
@@ -106,7 +107,8 @@ impl Event {
                 }
             }
             Event::UserOnline(_) |
-            Event::UserOffline(_) => EventType::UserStatus,
+            Event::UserOffline(_, _) |
+            Event::NickChange(_, _) => EventType::UserStatus,
             Event::Timer(_) => EventType::Timer,
             Event::Other(_) => EventType::Other,
         }
