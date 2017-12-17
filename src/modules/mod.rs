@@ -11,7 +11,7 @@ pub enum ResumeEventHandling {
     Resume,
 }
 
-pub trait Plugin {
+pub trait Module {
     fn create(id: String, config: Option<Value>) -> Self
     where
         Self: Sized;
@@ -19,7 +19,7 @@ pub trait Plugin {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum PluginType {
+pub enum ModuleType {
     RandomChat,
     MessagePasser,
 }

@@ -2,14 +2,14 @@ use chrono::Duration;
 use config::CONFIG;
 use core::{Event, EventType, Message, MessageContent, SourceEvent, SourceId};
 use logger::*;
-use plugins::*;
+use modules::*;
 use sources::*;
 use std::collections::{HashMap, HashSet};
 use std::sync::mpsc::{Receiver, channel};
 use timer::{Guard, MessageTimer};
 
-struct PluginDef {
-    object: Box<Plugin>,
+struct ModuleDef {
+    object: Box<Module>,
     priority: u8,
     subscriptions: HashMap<SourceId, HashSet<EventType>>,
 }
@@ -24,14 +24,14 @@ pub struct BotCoreAPI {
 /// The core of the bot
 pub struct BotCore {
     event_rx: Receiver<SourceEvent>,
-    plugins: Vec<PluginDef>,
+    modules: Vec<ModuleDef>,
     api: BotCoreAPI,
 }
 
 impl BotCore {
     /// Creates the core
     /// Sets up the event passing channel, reads the config and
-    /// creates and configures appropriate event sources and plugins
+    /// creates and configures appropriate event sources and modules
     pub fn new() -> Self {
         let (sender, receiver) = channel();
 
@@ -61,18 +61,18 @@ impl BotCore {
             }
         }
 
-        let mut plugins = vec![];
+        let mut modules = vec![];
         {
-            let plugins_def = &CONFIG.lock().unwrap().plugins;
-            for (id, def) in plugins_def {
-                let plugin: Box<Plugin> = match def.plugin_type {
-                    PluginType::RandomChat => Box::new(
+            let modules_def = &CONFIG.lock().unwrap().modules;
+            for (id, def) in modules_def {
+                let module: Box<Module> = match def.module_type {
+                    ModuleType::RandomChat => Box::new(
                         RandomChat::create(id.clone(), def.config.clone()),
                     ),
-                    //PluginType::MessagePasser => MessagePasser::new(def.config.clone()),
+                    //ModuleType::MessagePasser => MessagePasser::new(def.config.clone()),
                     _ => unimplemented!(),
                 };
-                plugins.push(PluginDef {
+                modules.push(ModuleDef {
                     priority: def.priority,
                     subscriptions: def.subscriptions
                         .iter()
@@ -80,7 +80,7 @@ impl BotCore {
                             (SourceId(id.clone()), set.iter().cloned().collect())
                         })
                         .collect(),
-                    object: plugin,
+                    object: module,
                 });
             }
         }
@@ -90,7 +90,7 @@ impl BotCore {
 
         BotCore {
             event_rx: receiver,
-            plugins,
+            modules,
             api: BotCoreAPI {
                 sources,
                 logger: Logger::new(log_folder),
@@ -139,10 +139,10 @@ impl BotCore {
 
     fn get_subscribers<'a, 'b>(
         source_id: &'a SourceId,
-        plugins: &'b mut Vec<PluginDef>,
+        modules: &'b mut Vec<ModuleDef>,
         event: EventType,
-    ) -> Vec<&'b mut Box<Plugin>> {
-        let mut subscribing_plugins: Vec<_> = plugins
+    ) -> Vec<&'b mut Box<Module>> {
+        let mut subscribing_modules: Vec<_> = modules
             .iter_mut()
             .filter(|def| {
                 def.subscriptions
@@ -152,15 +152,15 @@ impl BotCore {
             })
             .map(|def| (def.priority, &mut def.object))
             .collect();
-        subscribing_plugins.sort_by_key(|x| x.0);
-        subscribing_plugins.into_iter().map(|x| x.1).collect()
+        subscribing_modules.sort_by_key(|x| x.0);
+        subscribing_modules.into_iter().map(|x| x.1).collect()
     }
 
     fn handle_event(&mut self, event: SourceEvent) {
         let subscribers =
-            Self::get_subscribers(&event.source, &mut self.plugins, event.event.get_type());
-        for plugin in subscribers {
-            if plugin.handle_event(&mut self.api, event.clone()) == ResumeEventHandling::Stop {
+            Self::get_subscribers(&event.source, &mut self.modules, event.event.get_type());
+        for module in subscribers {
+            if module.handle_event(&mut self.api, event.clone()) == ResumeEventHandling::Stop {
                 break;
             }
         }

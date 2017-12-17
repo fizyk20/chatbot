@@ -8,7 +8,7 @@ Planned support for:
 * Slack
 * Discord
 
-Will feature a universal API, making it easy to write extensions ("plugins") adding various features, like
+Will feature a universal API, making it easy to write modules adding various features, like
 responding to commands, randomly sending messages generated with Markov chains or passing messages between
 different networks.
 

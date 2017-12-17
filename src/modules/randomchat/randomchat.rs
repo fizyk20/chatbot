@@ -2,12 +2,12 @@ use super::dictionary::Dictionary;
 use chrono::Duration;
 use config::CONFIG;
 use core::{BotCoreAPI, Command, Event, Message, MessageContent, SourceEvent, SourceId};
-use plugins::{Plugin, ResumeEventHandling};
+use modules::{Module, ResumeEventHandling};
 use rand::{self, Rng};
 use serde_json::{self, Value};
 
 pub struct RandomChat {
-    plugin_id: String,
+    module_id: String,
     dict: Dictionary,
     dict_path: String,
     enabled: bool,
@@ -17,7 +17,7 @@ pub struct RandomChat {
 
 impl RandomChat {
     fn init_timer(&mut self, core: &mut BotCoreAPI) {
-        core.schedule_timer(self.plugin_id.clone(), Duration::minutes(10));
+        core.schedule_timer(self.module_id.clone(), Duration::minutes(10));
         self.timer_initialised = true;
     }
 }
@@ -29,7 +29,7 @@ struct RandomChatConfig {
     dictionary_path: Option<String>,
 }
 
-impl Plugin for RandomChat {
+impl Module for RandomChat {
     fn create(id: String, config: Option<Value>) -> RandomChat {
         let config: RandomChatConfig = serde_json::from_value(config.unwrap()).unwrap();
         let dict_path = config.dictionary_path.unwrap_or(
@@ -37,7 +37,7 @@ impl Plugin for RandomChat {
         );
         let dict = Dictionary::load(&dict_path).unwrap();
         RandomChat {
-            plugin_id: id,
+            module_id: id,
             dict,
             dict_path,
             enabled: config.enabled,
@@ -125,8 +125,8 @@ impl RandomChat {
                 self.enabled = true;
                 let mut config = CONFIG.lock().unwrap();
                 config
-                    .plugins
-                    .get_mut(&self.plugin_id)
+                    .modules
+                    .get_mut(&self.module_id)
                     .unwrap()
                     .config
                     .as_mut()
@@ -144,8 +144,8 @@ impl RandomChat {
                 self.enabled = false;
                 let mut config = CONFIG.lock().unwrap();
                 config
-                    .plugins
-                    .get_mut(&self.plugin_id)
+                    .modules
+                    .get_mut(&self.module_id)
                     .unwrap()
                     .config
                     .as_mut()
@@ -179,7 +179,7 @@ impl RandomChat {
     }
 
     fn handle_timer(&mut self, core: &mut BotCoreAPI, id: String) -> ResumeEventHandling {
-        if id == self.plugin_id {
+        if id == self.module_id {
             self.dict.save(&self.dict_path);
             self.init_timer(core);
             ResumeEventHandling::Stop

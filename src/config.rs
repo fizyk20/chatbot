@@ -1,5 +1,5 @@
 use core::EventType;
-use plugins::PluginType;
+use modules::ModuleType;
 use serde_json::{self, Value};
 use sources::SourceType;
 use std::collections::HashMap;
@@ -23,10 +23,10 @@ pub struct SourceDef {
     pub config: Option<Value>,
 }
 
-/// A definition of a plugin
+/// A definition of a module
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct PluginDef {
-    pub plugin_type: PluginType,
+pub struct ModuleDef {
+    pub module_type: ModuleType,
     pub config: Option<Value>,
     pub priority: u8,
     pub subscriptions: HashMap<String, Vec<EventType>>,
@@ -39,7 +39,7 @@ pub struct ConfigInner {
     pub command_char: String,
     pub log_folder: String,
     pub sources: HashMap<String, SourceDef>,
-    pub plugins: HashMap<String, PluginDef>,
+    pub modules: HashMap<String, ModuleDef>,
 }
 
 impl Config {

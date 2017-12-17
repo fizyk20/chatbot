@@ -14,7 +14,7 @@ mod sources;
 mod config;
 mod core;
 mod logger;
-mod plugins;
+mod modules;
 
 use core::BotCore;
 

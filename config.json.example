@@ -14,9 +14,9 @@
 			"source_type": "Stdin"
 		}
 	},
-	"plugins": {
+	"modules": {
 		"randomchat": {
-			"plugin_type": "RandomChat",
+			"module_type": "RandomChat",
 			"priority": 0,
 			"subscriptions": {
 				"IRC-Freenode": ["TextMessage"]
