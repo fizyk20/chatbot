@@ -50,30 +50,42 @@ impl EventSourceBuilder for IrcSource {
     }
 }
 
-impl From<::irc::client::prelude::Message> for Event {
-    fn from(msg: ::irc::client::prelude::Message) -> Event {
-        use irc::client::prelude::Command::*;
-        let sender = msg.prefix
-            .clone()
-            .unwrap_or_else(|| "".to_string())
-            .chars()
-            .take_while(|c| *c != '!')
-            .collect();
-        match msg.command {
-            PRIVMSG(from, txt) => Event::ReceivedMessage(::core::Message {
-                author: sender,
-                channel: if from.starts_with("#") {
-                    Channel::Channel(from)
-                } else {
-                    Channel::User(from)
-                },
-                content: MessageContent::Text(txt),
-            }),
-            NICK(new_nick) => Event::NickChange(sender, new_nick),
-            JOIN(_, _, _) => Event::UserOnline(sender),
-            PART(_, comment) | QUIT(comment) => Event::UserOffline(sender, comment),
-            _ => Event::Other(format!("{:?}", msg)),
+fn message_to_events(msg: ::irc::client::prelude::Message) -> Vec<Event> {
+    use irc::client::prelude::Command::*;
+    use irc::client::prelude::Response::*;
+    let sender = msg.prefix
+        .clone()
+        .unwrap_or_else(|| "".to_string())
+        .chars()
+        .take_while(|c| *c != '!')
+        .collect();
+    match msg.command {
+        PRIVMSG(from, txt) => {
+            vec![
+                Event::ReceivedMessage(::core::Message {
+                    author: sender,
+                    channel: if from.starts_with("#") {
+                        Channel::Channel(from)
+                    } else {
+                        Channel::User(from)
+                    },
+                    content: MessageContent::Text(txt),
+                }),
+            ]
         }
+        NICK(new_nick) => vec![Event::NickChange(sender, new_nick)],
+        JOIN(_, _, _) => vec![Event::UserOnline(sender)],
+        PART(_, comment) | QUIT(comment) => vec![Event::UserOffline(sender, comment)],
+        Response(code, _, ref msg) if code == RPL_NAMREPLY => {
+            if let &Some(ref msg) = msg {
+                msg.split_whitespace()
+                    .map(|x| Event::UserOnline(x.to_owned()))
+                    .collect()
+            } else {
+                vec![]
+            }
+        }
+        _ => vec![Event::Other(format!("{:?}", msg))],
     }
 }
 
@@ -98,11 +110,13 @@ impl EventSource for IrcSource {
         let handle = thread::spawn(move || -> SourceResult<()> {
             thread_server.identify()?;
             let _ = thread_server.for_each_incoming(|message| {
-                let event = message.into();
-                let _ = thread_sender.send(SourceEvent {
-                    source: source_id.clone(),
-                    event,
-                });
+                let events = message_to_events(message);
+                for event in events {
+                    let _ = thread_sender.send(SourceEvent {
+                        source: source_id.clone(),
+                        event,
+                    });
+                }
             });
             Ok(())
         });
