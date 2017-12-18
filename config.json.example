@@ -31,6 +31,20 @@
 				"enabled": true,
 				"probability": 50
 			}
+		},
+		"pipe": {
+			"module_type": "MsgPipe",
+			"priority": 0,
+			"subscriptions": {
+				"IRC-Freenode": ["TextMessage"],
+				"slack": ["TextMessage"]
+			},
+			"config": {
+				"source1": "IRC-Freenode",
+				"channel1": "#test",
+				"source2": "slack",
+				"channel2": "freenode"
+			}
 		}
 	}
 }

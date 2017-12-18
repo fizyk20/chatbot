@@ -70,7 +70,9 @@ impl BotCore {
                     ModuleType::RandomChat => {
                         Box::new(RandomChat::create(id.clone(), def.config.clone()))
                     }
-                    //ModuleType::MessagePasser => MessagePasser::new(def.config.clone()),
+                    ModuleType::MsgPipe => {
+                        Box::new(MsgPipe::create(id.clone(), def.config.clone()))
+                    }
                     _ => unimplemented!(),
                 };
                 modules.push(ModuleDef {

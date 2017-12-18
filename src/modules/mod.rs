@@ -2,8 +2,10 @@ use core::{BotCoreAPI, SourceEvent};
 use serde_json::Value;
 
 mod randomchat;
+mod msg_pipe;
 
 pub use self::randomchat::RandomChat;
+pub use self::msg_pipe::MsgPipe;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ResumeEventHandling {
@@ -21,5 +23,5 @@ pub trait Module {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ModuleType {
     RandomChat,
-    MessagePasser,
+    MsgPipe,
 }
