@@ -71,7 +71,7 @@ impl EventSource for SlackSource {
             .start_response()
             .and_then(|resp| resp.slf.as_ref())
             .and_then(|user| user.name.as_ref().map(|s| s as &str))
-            .unwrap_or("")
+            .unwrap_or("[no nick]")
     }
 
     fn get_type(&self) -> SourceType {
@@ -150,13 +150,74 @@ impl EventHandler for SlackHandler {
         });
     }
 
-    fn on_event(&mut self, _: &RtmClient, event: ::slack::Event) {
-        let event = match event {
-            _ => Event::Other(format!("{:?}", event)),
+    fn on_event(&mut self, client: &RtmClient, event: ::slack::Event) {
+        let events = match event {
+            ::slack::Event::Message(msg) => match *msg {
+                ::slack::Message::Standard(msg) => {
+                    if let (Some(sender), Some(channel), Some(text)) =
+                        (msg.user, msg.channel, msg.text)
+                    {
+                        let resp = client.start_response();
+                        let msg = Message {
+                            author: get_nick_by_id(resp, &sender)
+                                .unwrap_or("[no author]")
+                                .to_owned(),
+                            channel: Channel::Channel(channel),
+                            content: MessageContent::Text(text),
+                        };
+                        vec![Event::ReceivedMessage(msg)]
+                    } else {
+                        vec![]
+                    }
+                }
+                _ => vec![Event::Other(format!("{:?}", msg))],
+            },
+            _ => vec![Event::Other(format!("{:?}", event))],
         };
-        let _ = self.sender.send(SourceEvent {
-            source: self.id.clone(),
-            event: event,
-        });
+        for event in events {
+            let _ = self.sender.send(SourceEvent {
+                source: self.id.clone(),
+                event: event,
+            });
+        }
     }
+}
+
+fn get_id_by_nick<'a, 'b>(start_resp: &'a StartResponse, nick: &'b str) -> Option<&'a str> {
+    start_resp
+        .users
+        .as_ref()
+        .and_then(|users| {
+            users
+                .into_iter()
+                .find(|user| user.name.as_ref().map(|name| name == nick).unwrap_or(false))
+        })
+        .and_then(|user| user.id.as_ref())
+        .map(|id| id as &str)
+}
+
+fn get_nick_by_id<'a, 'b>(start_resp: &'a StartResponse, id: &'b str) -> Option<&'a str> {
+    start_resp
+        .users
+        .as_ref()
+        .and_then(|users| {
+            users
+                .into_iter()
+                .find(|user| user.id.as_ref().map(|uid| uid == id).unwrap_or(false))
+        })
+        .and_then(|user| user.name.as_ref())
+        .map(|name| name as &str)
+}
+
+fn get_channel_by_id<'a, 'b>(start_resp: &'a StartResponse, id: &'b str) -> Option<&'a str> {
+    start_resp
+        .channels
+        .as_ref()
+        .and_then(|channels| {
+            channels
+                .into_iter()
+                .find(|channel| channel.id.as_ref().map(|cid| cid == id).unwrap_or(false))
+        })
+        .and_then(|channel| channel.name.as_ref())
+        .map(|name| name as &str)
 }
