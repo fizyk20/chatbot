@@ -10,6 +10,12 @@
 				"channels": ["#test"]
 			}
 		},
+		"slack": {
+			"source_type": "Slack",
+			"config": {
+				"token": "insert-token-here"
+			}
+		},
 		"stdin": {
 			"source_type": "Stdin"
 		}

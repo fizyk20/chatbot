@@ -55,6 +55,13 @@ impl BotCore {
                             None,
                         ))
                     }
+                    SourceType::Slack => {
+                        Box::new(SlackSource::build_source(
+                            source_id.clone(),
+                            sender.clone(),
+                            def.config.clone(),
+                        ))
+                    }
                     _ => unreachable!(),
                 };
                 sources.insert(source_id, source);

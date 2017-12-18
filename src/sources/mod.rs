@@ -5,8 +5,10 @@ use std::sync::mpsc::Sender;
 
 pub mod irc;
 pub mod stdin;
+pub mod slack;
 
 pub use self::irc::IrcSource;
+pub use self::slack::SlackSource;
 pub use self::stdin::StdinSource;
 
 /// Types of the supported event sources

@@ -1,5 +1,7 @@
 extern crate chrono;
 extern crate irc;
+extern crate slack;
+extern crate slack_api;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
