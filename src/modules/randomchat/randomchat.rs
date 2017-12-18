@@ -183,7 +183,7 @@ impl RandomChat {
 
     fn handle_timer(&mut self, core: &mut BotCoreAPI, id: String) -> ResumeEventHandling {
         if id == self.module_id {
-            self.dict.save(&self.dict_path);
+            let _ = self.dict.save(&self.dict_path);
             self.init_timer(core);
             ResumeEventHandling::Stop
         } else {

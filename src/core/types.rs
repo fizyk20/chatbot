@@ -4,7 +4,7 @@ use config::CONFIG;
 pub struct SourceId(pub String);
 
 /// Different kinds of communication channels
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Channel {
     None,
     Channel(String),

@@ -25,14 +25,17 @@ impl Module for MsgPipe {
     }
 
     fn handle_event(&mut self, core: &mut BotCoreAPI, event: SourceEvent) -> ResumeEventHandling {
-        let (target_source, target_channel) = if event.source == self.endpoint1.0 {
-            self.endpoint2.clone()
+        let ((target_source, target_channel), src_channel) = if event.source == self.endpoint1.0 {
+            (self.endpoint2.clone(), self.endpoint1.1.clone())
         } else if event.source == self.endpoint2.0 {
-            self.endpoint1.clone()
+            (self.endpoint1.clone(), self.endpoint2.1.clone())
         } else {
             return ResumeEventHandling::Resume;
         };
         if let Event::ReceivedMessage(msg) = event.event {
+            if msg.channel != src_channel {
+                return ResumeEventHandling::Resume;
+            }
             if let MessageContent::Text(txt) = msg.content {
                 let new_content = format!("[{}]: {}", msg.author, txt);
                 let message = Message {
