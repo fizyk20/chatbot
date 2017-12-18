@@ -1,15 +1,15 @@
 extern crate chrono;
 extern crate irc;
-extern crate slack;
-extern crate slack_api;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
 extern crate quick_error;
 extern crate rand;
-extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_json;
+extern crate slack;
+extern crate slack_api;
 extern crate timer;
 
 mod sources;

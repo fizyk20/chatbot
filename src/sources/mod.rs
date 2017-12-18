@@ -71,6 +71,8 @@ mod test {
     #[test]
     fn test_object_safety() {
         // if this compiles, EventSource can be used as a trait object
-        let f = |a: &mut EventSource| { a.reconnect().unwrap(); };
+        let f = |a: &mut EventSource| {
+            a.reconnect().unwrap();
+        };
     }
 }

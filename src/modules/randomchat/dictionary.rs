@@ -17,9 +17,7 @@ fn to_u32(x: &[u8]) -> Option<u32> {
     if x.len() < 4 {
         return None;
     }
-    Some(
-        x[0] as u32 + ((x[1] as u32) << 8) + ((x[2] as u32) << 16) + ((x[3] as u32) << 24),
-    )
+    Some(x[0] as u32 + ((x[1] as u32) << 8) + ((x[2] as u32) << 16) + ((x[3] as u32) << 24))
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -98,8 +96,8 @@ impl<'a> ByteReader<'a> {
     fn read_string(&mut self) -> String {
         let word_length = to_u32(&self.bytes[self.cursor..self.cursor + 4]).unwrap() as usize;
         self.cursor += 4;
-        let word = ::std::str::from_utf8(&self.bytes[self.cursor..self.cursor + word_length])
-            .unwrap();
+        let word =
+            ::std::str::from_utf8(&self.bytes[self.cursor..self.cursor + word_length]).unwrap();
         self.cursor += word_length;
         word.to_string()
     }

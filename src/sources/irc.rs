@@ -60,19 +60,17 @@ fn message_to_events(msg: ::irc::client::prelude::Message) -> Vec<Event> {
         .take_while(|c| *c != '!')
         .collect();
     match msg.command {
-        PRIVMSG(from, txt) => {
-            vec![
-                Event::ReceivedMessage(::core::Message {
-                    author: sender,
-                    channel: if from.starts_with("#") {
-                        Channel::Channel(from)
-                    } else {
-                        Channel::User(from)
-                    },
-                    content: MessageContent::Text(txt),
-                }),
-            ]
-        }
+        PRIVMSG(from, txt) => vec![
+            Event::ReceivedMessage(::core::Message {
+                author: sender,
+                channel: if from.starts_with("#") {
+                    Channel::Channel(from)
+                } else {
+                    Channel::User(from)
+                },
+                content: MessageContent::Text(txt),
+            }),
+        ],
         NICK(new_nick) => vec![Event::NickChange(sender, new_nick)],
         JOIN(_, _, _) => vec![Event::UserOnline(sender)],
         PART(_, comment) | QUIT(comment) => vec![Event::UserOffline(sender, comment)],

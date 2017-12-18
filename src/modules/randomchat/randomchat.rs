@@ -32,9 +32,9 @@ struct RandomChatConfig {
 impl Module for RandomChat {
     fn create(id: String, config: Option<Value>) -> RandomChat {
         let config: RandomChatConfig = serde_json::from_value(config.unwrap()).unwrap();
-        let dict_path = config.dictionary_path.unwrap_or(
-            "dictionary.dat".to_owned(),
-        );
+        let dict_path = config
+            .dictionary_path
+            .unwrap_or("dictionary.dat".to_owned());
         let dict = Dictionary::load(&dict_path).unwrap();
         RandomChat {
             module_id: id,
@@ -53,7 +53,7 @@ impl Module for RandomChat {
                 self.handle_command(core, source, cmd)
             } else {
                 self.handle_message(core, source, msg)
-            }
+            },
             Event::Timer(id) => self.handle_timer(core, id),
             _ => ResumeEventHandling::Resume,
         }
@@ -130,7 +130,9 @@ impl RandomChat {
                     .unwrap()
                     .config
                     .as_mut()
-                    .map(|ref mut config| { config["enabled"] = Value::Bool(true); });
+                    .map(|ref mut config| {
+                        config["enabled"] = Value::Bool(true);
+                    });
                 core.send(
                     &src,
                     Message {
@@ -149,7 +151,9 @@ impl RandomChat {
                     .unwrap()
                     .config
                     .as_mut()
-                    .map(|ref mut config| { config["enabled"] = Value::Bool(false); });
+                    .map(|ref mut config| {
+                        config["enabled"] = Value::Bool(false);
+                    });
                 core.send(
                     &src,
                     Message {
@@ -166,8 +170,7 @@ impl RandomChat {
                         author: "".to_owned(),
                         channel: command.channel,
                         content: MessageContent::Text(
-                            format!("Unknown parameter value: {}", command.params[1])
-                                .to_string(),
+                            format!("Unknown parameter value: {}", command.params[1]).to_string(),
                         ),
                     },
                 ).unwrap();

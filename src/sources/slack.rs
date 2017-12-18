@@ -91,9 +91,9 @@ impl EventSource for SlackSource {
                 id: id.clone(),
                 sender: src_sender,
             };
-            client.run(&mut handler).map_err(|err| {
-                SourceError::ConnectionError(id, err.to_string())
-            })
+            client
+                .run(&mut handler)
+                .map_err(|err| SourceError::ConnectionError(id, err.to_string()))
         });
 
         // save the server object and thread handle

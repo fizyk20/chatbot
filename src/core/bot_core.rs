@@ -5,7 +5,7 @@ use logger::*;
 use modules::*;
 use sources::*;
 use std::collections::{HashMap, HashSet};
-use std::sync::mpsc::{Receiver, channel};
+use std::sync::mpsc::{channel, Receiver};
 use timer::{Guard, MessageTimer};
 
 struct ModuleDef {
@@ -41,27 +41,21 @@ impl BotCore {
             for (id, def) in sources_def {
                 let source_id = SourceId(id.clone());
                 let source: Box<EventSource> = match def.source_type {
-                    SourceType::Irc => {
-                        Box::new(IrcSource::build_source(
-                            source_id.clone(),
-                            sender.clone(),
-                            def.config.clone(),
-                        ))
-                    }
-                    SourceType::Stdin => {
-                        Box::new(StdinSource::build_source(
-                            source_id.clone(),
-                            sender.clone(),
-                            None,
-                        ))
-                    }
-                    SourceType::Slack => {
-                        Box::new(SlackSource::build_source(
-                            source_id.clone(),
-                            sender.clone(),
-                            def.config.clone(),
-                        ))
-                    }
+                    SourceType::Irc => Box::new(IrcSource::build_source(
+                        source_id.clone(),
+                        sender.clone(),
+                        def.config.clone(),
+                    )),
+                    SourceType::Stdin => Box::new(StdinSource::build_source(
+                        source_id.clone(),
+                        sender.clone(),
+                        None,
+                    )),
+                    SourceType::Slack => Box::new(SlackSource::build_source(
+                        source_id.clone(),
+                        sender.clone(),
+                        def.config.clone(),
+                    )),
                     _ => unreachable!(),
                 };
                 sources.insert(source_id, source);
@@ -73,9 +67,9 @@ impl BotCore {
             let modules_def = &CONFIG.lock().unwrap().modules;
             for (id, def) in modules_def {
                 let module: Box<Module> = match def.module_type {
-                    ModuleType::RandomChat => Box::new(
-                        RandomChat::create(id.clone(), def.config.clone()),
-                    ),
+                    ModuleType::RandomChat => {
+                        Box::new(RandomChat::create(id.clone(), def.config.clone()))
+                    }
                     //ModuleType::MessagePasser => MessagePasser::new(def.config.clone()),
                     _ => unimplemented!(),
                 };
@@ -83,9 +77,7 @@ impl BotCore {
                     priority: def.priority,
                     subscriptions: def.subscriptions
                         .iter()
-                        .map(|(id, set)| {
-                            (SourceId(id.clone()), set.iter().cloned().collect())
-                        })
+                        .map(|(id, set)| (SourceId(id.clone()), set.iter().cloned().collect()))
                         .collect(),
                     object: module,
                 });
@@ -129,15 +121,13 @@ impl BotCore {
 
     fn log_event(&mut self, event: &SourceEvent) {
         let text = match event.event {
-            Event::ReceivedMessage(ref msg) => {
-                match msg.content {
-                    MessageContent::Text(ref txt) => format!("<{}> {}", msg.author, txt),
-                    MessageContent::Me(ref txt) => {
-                        format!("* {} {}", self.api.get_nick(&event.source), txt)
-                    }
-                    MessageContent::Image => format!("[Image]"),
+            Event::ReceivedMessage(ref msg) => match msg.content {
+                MessageContent::Text(ref txt) => format!("<{}> {}", msg.author, txt),
+                MessageContent::Me(ref txt) => {
+                    format!("* {} {}", self.api.get_nick(&event.source), txt)
                 }
-            }
+                MessageContent::Image => format!("[Image]"),
+            },
             Event::Other(ref txt) => txt.clone(),
             _ => format!("{:?}", event.event),
         };

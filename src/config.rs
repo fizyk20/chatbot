@@ -46,14 +46,12 @@ impl Config {
     /// Loads configuration from a file and returns the resulting Config object
     pub fn new<P: AsRef<Path>>(path: P) -> Config {
         let path_buf = path.as_ref().to_path_buf();
-        let mut file = fs::File::open(path).ok().expect(&format!(
-            "Couldn't open file {:?}",
-            path_buf
-        ));
+        let mut file = fs::File::open(path)
+            .ok()
+            .expect(&format!("Couldn't open file {:?}", path_buf));
         let mut config = String::new();
-        file.read_to_string(&mut config).expect(
-            "Couldn't read from file",
-        );
+        file.read_to_string(&mut config)
+            .expect("Couldn't read from file");
         Config {
             path: path_buf,
             inner: serde_json::from_str(&config).unwrap(),
@@ -62,10 +60,9 @@ impl Config {
 
     /// Saves the configuration to the file it was read from (overwrites the previous one)
     pub fn save(&self) {
-        let mut file = fs::File::create(&self.path).ok().expect(&format!(
-            "Couldn't create file {:?}",
-            self.path
-        ));
+        let mut file = fs::File::create(&self.path)
+            .ok()
+            .expect(&format!("Couldn't create file {:?}", self.path));
         let json = serde_json::to_string(&self.inner).unwrap();
         let _ = file.write(json.as_bytes());
     }

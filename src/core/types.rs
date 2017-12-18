@@ -99,16 +99,14 @@ impl Event {
         match *self {
             Event::Connected | Event::Disconnected => EventType::Connection,
             Event::DirectInput(_) => EventType::TextMessage,
-            Event::ReceivedMessage(ref msg) => {
-                match msg.content {
-                    MessageContent::Text(_) => EventType::TextMessage,
-                    MessageContent::Me(_) => EventType::MeMessage,
-                    MessageContent::Image => EventType::ImageMessage,
-                }
+            Event::ReceivedMessage(ref msg) => match msg.content {
+                MessageContent::Text(_) => EventType::TextMessage,
+                MessageContent::Me(_) => EventType::MeMessage,
+                MessageContent::Image => EventType::ImageMessage,
+            },
+            Event::UserOnline(_) | Event::UserOffline(_, _) | Event::NickChange(_, _) => {
+                EventType::UserStatus
             }
-            Event::UserOnline(_) |
-            Event::UserOffline(_, _) |
-            Event::NickChange(_, _) => EventType::UserStatus,
             Event::Timer(_) => EventType::Timer,
             Event::Other(_) => EventType::Other,
         }
