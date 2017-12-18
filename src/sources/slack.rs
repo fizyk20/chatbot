@@ -65,6 +65,16 @@ impl EventSourceBuilder for SlackSource {
     }
 }
 
+impl SlackSource {
+    fn get_id(&self) -> &str {
+        self.state
+            .start_response()
+            .and_then(|resp| resp.slf.as_ref())
+            .and_then(|user| user.id.as_ref().map(|s| s as &str))
+            .unwrap_or("[no id]")
+    }
+}
+
 impl EventSource for SlackSource {
     fn get_nick(&self) -> &str {
         self.state
@@ -111,9 +121,16 @@ impl EventSource for SlackSource {
             SourceState::Connected(ref sender, _, _) => sender,
             _ => return Err(SourceError::Disconnected(self.id.clone())),
         };
-        let target = match dst {
-            Channel::Channel(c) => c,
-            Channel::User(u) => u,
+        let state = &self.state;
+        let channel_id = match dst {
+            Channel::Channel(c) => state
+                .start_response()
+                .and_then(|resp| get_id_by_channel(resp, &c))
+                .map(|id| id.to_owned()),
+            Channel::User(u) => state
+                .start_response()
+                .and_then(|resp| get_id_by_nick(resp, &u))
+                .map(|id| id.to_owned()),
             _ => return Err(SourceError::InvalidChannel(self.id.clone(), dst)),
         };
         let msg = match msg {
@@ -121,7 +138,10 @@ impl EventSource for SlackSource {
             MessageContent::Me(t) => t,
             _ => return Err(SourceError::InvalidMessage(self.id.clone(), msg)),
         };
-        //sender.send(message)?;
+        channel_id.and_then(|cid| {
+            let _ = sender.send_message(&cid, &msg);
+            Some(())
+        });
         Ok(())
     }
 
@@ -162,7 +182,11 @@ impl EventHandler for SlackHandler {
                             author: get_nick_by_id(resp, &sender)
                                 .unwrap_or("[no author]")
                                 .to_owned(),
-                            channel: Channel::Channel(channel),
+                            channel: Channel::Channel(
+                                get_channel_by_id(resp, &channel)
+                                    .unwrap_or("[invalid channel]")
+                                    .to_owned(),
+                            ),
                             content: MessageContent::Text(text),
                         };
                         vec![Event::ReceivedMessage(msg)]
@@ -207,6 +231,26 @@ fn get_nick_by_id<'a, 'b>(start_resp: &'a StartResponse, id: &'b str) -> Option<
         })
         .and_then(|user| user.name.as_ref())
         .map(|name| name as &str)
+}
+
+fn get_id_by_channel<'a, 'b>(
+    start_resp: &'a StartResponse,
+    channel_name: &'b str,
+) -> Option<&'a str> {
+    start_resp
+        .channels
+        .as_ref()
+        .and_then(|channels| {
+            channels.into_iter().find(|channel| {
+                channel
+                    .name
+                    .as_ref()
+                    .map(|name| name == channel_name)
+                    .unwrap_or(false)
+            })
+        })
+        .and_then(|channel| channel.id.as_ref())
+        .map(|id| id as &str)
 }
 
 fn get_channel_by_id<'a, 'b>(start_resp: &'a StartResponse, id: &'b str) -> Option<&'a str> {
