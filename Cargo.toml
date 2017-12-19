@@ -13,5 +13,5 @@ quick-error = "1.2"
 rand = "0.3"
 timer = "0.2"
 irc = "0.12"
-slack = "0.19"
+slack = { git = "https://github.com/fizyk20/slack-rs.git", branch = "less-blocking-reads" }
 slack_api = "0.18"
