@@ -25,7 +25,8 @@
 			"module_type": "RandomChat",
 			"priority": 0,
 			"subscriptions": {
-				"IRC-Freenode": ["TextMessage"]
+				"IRC-Freenode": ["TextMessage"],
+				"core": ["Timer"]
 			},
 			"config": {
 				"enabled": true,
