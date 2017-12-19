@@ -174,7 +174,22 @@ impl EventHandler for SlackHandler {
         use slack::Event::*;
         use slack::Message::*;
         let events = match event {
+            // ignore noise
             ReconnectUrl { .. } => vec![],
+            UserTyping { .. } => vec![],
+            // process other events
+            PresenceChange {
+                ref user,
+                ref presence,
+            } => {
+                let resp = client.start_response();
+                let nick = get_nick_by_id(resp, user);
+                nick.map(|nick| match presence as &str {
+                    "active" => vec![Event::UserOnline(nick.to_owned())],
+                    "away" => vec![Event::UserOffline(nick.to_owned(), None)],
+                    _ => vec![],
+                }).unwrap_or_else(Vec::new)
+            }
             Message(msg) => match *msg {
                 Standard(msg) => {
                     if let (Some(sender), Some(channel), Some(text)) =
