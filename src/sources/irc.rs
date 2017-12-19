@@ -60,6 +60,8 @@ fn message_to_events(msg: ::irc::client::prelude::Message) -> Vec<Event> {
         .take_while(|c| *c != '!')
         .collect();
     match msg.command {
+        PING(_, _) => vec![],
+        PONG(_, _) => vec![],
         PRIVMSG(from, txt) => vec![
             Event::ReceivedMessage(::core::Message {
                 author: sender,

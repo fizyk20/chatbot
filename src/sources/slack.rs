@@ -171,14 +171,17 @@ impl EventHandler for SlackHandler {
     }
 
     fn on_event(&mut self, client: &RtmClient, event: ::slack::Event) {
+        use slack::Event::*;
+        use slack::Message::*;
         let events = match event {
-            ::slack::Event::Message(msg) => match *msg {
-                ::slack::Message::Standard(msg) => {
+            ReconnectUrl { .. } => vec![],
+            Message(msg) => match *msg {
+                Standard(msg) => {
                     if let (Some(sender), Some(channel), Some(text)) =
                         (msg.user, msg.channel, msg.text)
                     {
                         let resp = client.start_response();
-                        let msg = Message {
+                        let msg = ::core::Message {
                             author: get_nick_by_id(resp, &sender)
                                 .unwrap_or("[no author]")
                                 .to_owned(),
