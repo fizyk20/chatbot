@@ -61,7 +61,7 @@ impl BotCore {
                         sender.clone(),
                         def.config.clone(),
                     )),
-                    _ => unreachable!(),
+                    // _ => unreachable!(),
                 };
                 sources.insert(source_id, source);
             }
@@ -78,7 +78,7 @@ impl BotCore {
                     ModuleType::MsgPipe => {
                         Box::new(MsgPipe::create(id.clone(), def.config.clone()))
                     }
-                    _ => unimplemented!(),
+                    // _ => unimplemented!(),
                 };
                 modules.push(ModuleDef {
                     priority: def.priority,
