@@ -22,6 +22,14 @@ impl Module for MsgPipe {
         if let Event::ReceivedMessage(msg) = event.event {
             if let MessageContent::Text(txt) = msg.content {
                 let new_content = format!("[{}]: {}", msg.author, txt);
+                let source = &event.source.0;
+                let channel = &msg.channel;
+                if !self.endpoints.iter().any(|endpoint| {
+                    source == &endpoint.source
+                        && *channel == Channel::Channel(endpoint.channel.clone())
+                }) {
+                    return ResumeEventHandling::Resume;
+                }
                 for endpoint in &self.endpoints {
                     let source = SourceId(endpoint.source.clone());
                     let channel = Channel::Channel(endpoint.channel.clone());
