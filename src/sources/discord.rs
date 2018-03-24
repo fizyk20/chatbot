@@ -1,6 +1,7 @@
 use core::*;
 use discord::Discord;
-use discord::model::CurrentUser;
+use discord::Error as DiscordError;
+use discord::model::{ChannelId, CurrentUser, UserId};
 use serde_json::{self, Value};
 use sources::*;
 use std::thread::{self, JoinHandle};
@@ -96,6 +97,18 @@ impl EventSource for DiscordSource {
     }
 
     fn send(&mut self, dst: Channel, msg: MessageContent) -> SourceResult<()> {
+        let discord = self.discord()?;
+        let channel_id = match dst {
+            Channel::Channel(c) => self.get_channel_id(&c)?,
+            Channel::User(u) => self.get_user_channel_id(&u)?,
+            _ => return Err(SourceError::InvalidChannel(self.id.clone(), dst)),
+        };
+        let msg = match msg {
+            MessageContent::Text(t) => t,
+            MessageContent::Me(t) => t,
+            _ => return Err(SourceError::InvalidMessage(self.id.clone(), msg)),
+        };
+        discord.send_message(channel_id, &msg, "", false)?;
         Ok(())
     }
 
@@ -106,4 +119,54 @@ impl EventSource for DiscordSource {
 
 impl DiscordSource {
     fn handle_event(event: ::discord::model::Event, sender: &Sender<SourceEvent>) {}
+
+    fn discord(&self) -> SourceResult<&Discord> {
+        match self.state {
+            SourceState::Connected(ref discord, _, _) => Ok(discord),
+            _ => return Err(SourceError::Disconnected(self.id.clone())),
+        }
+    }
+
+    fn get_user_id(&self, user: &str) -> SourceResult<UserId> {
+        let discord = self.discord()?;
+        for server in discord.get_servers()? {
+            let members = discord.get_server_members(server.id)?;
+            for member in members {
+                if member.name == user {
+                    return Ok(member.id);
+                }
+            }
+        }
+        Err(SourceError::InvalidChannel(
+            self.id.clone(),
+            Channel::User(user.to_owned()),
+        ))
+    }
+
+    fn get_channel_id(&self, channel: &str) -> SourceResult<ChannelId> {
+        let discord = self.discord()?;
+        for server in discord.get_servers()? {
+            let channels = discord.get_server_channels(server.id)?;
+            for c in channels {
+                if c.name == channel {
+                    return Ok(c.id);
+                }
+            }
+        }
+        Err(SourceError::InvalidChannel(
+            self.id.clone(),
+            Channel::Channel(channel.to_owned()),
+        ))
+    }
+
+    fn get_user_channel_id(&self, user: &str) -> SourceResult<ChannelId> {
+        let user_id = self.get_user_id(user)?;
+        Ok(self.discord()?.create_private_channel(user_id)?.id)
+    }
+}
+
+impl From<DiscordError> for SourceError {
+    fn from(err: DiscordError) -> Self {
+        SourceError::Other(format!("{:?}", err))
+    }
 }

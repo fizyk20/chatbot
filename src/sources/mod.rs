@@ -34,6 +34,7 @@ quick_error! {
         IrcError(err: IrcError) {
             from()
         }
+        Other(txt: String) {}
     }
 }
 
