@@ -131,6 +131,10 @@ impl DiscordSource {
         use discord::model::Event::*;
         match event {
             MessageCreate(msg) => {
+                // don't react to own messages
+                if msg.author.id == state.user().id {
+                    return;
+                }
                 let channel = match state
                     .find_channel(msg.channel_id)
                     .expect("Message from an unknown channel")
