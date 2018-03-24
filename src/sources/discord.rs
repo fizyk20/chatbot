@@ -1,5 +1,5 @@
 use core::*;
-use discord::Discord;
+use discord::{Discord, State};
 use discord::Error as DiscordError;
 use discord::model::{ChannelId, CurrentUser, UserId};
 use serde_json::{self, Value};
@@ -77,10 +77,13 @@ impl EventSource for DiscordSource {
             source: self.id.clone(),
             event: Event::Other(format!("{:?}", ready)),
         });
+        let mut state = State::new(ready);
+        let id = self.id.clone();
         let sender = self.sender.clone();
         let receiver = thread::spawn(move || loop {
             if let Ok(event) = connection.recv_event() {
-                Self::handle_event(event, &sender);
+                state.update(&event);
+                Self::handle_event(event, &state, &id, &sender);
             } else {
                 break;
             }
@@ -118,7 +121,44 @@ impl EventSource for DiscordSource {
 }
 
 impl DiscordSource {
-    fn handle_event(event: ::discord::model::Event, sender: &Sender<SourceEvent>) {}
+    fn handle_event(
+        event: ::discord::model::Event,
+        state: &State,
+        id: &SourceId,
+        sender: &Sender<SourceEvent>,
+    ) {
+        use discord::ChannelRef::*;
+        use discord::model::Event::*;
+        match event {
+            MessageCreate(msg) => {
+                let channel = match state
+                    .find_channel(msg.channel_id)
+                    .expect("Message from an unknown channel")
+                {
+                    Private(prv) => Channel::User(prv.recipient.name.clone()),
+                    Public(_, publ) => Channel::Channel(publ.name.clone()),
+                    _ => {
+                        return;
+                    }
+                };
+                let msg = Message {
+                    author: msg.author.name,
+                    channel,
+                    content: MessageContent::Text(msg.content),
+                };
+                let _ = sender.send(SourceEvent {
+                    source: id.clone(),
+                    event: Event::ReceivedMessage(msg),
+                });
+            }
+            _ => {
+                let _ = sender.send(SourceEvent {
+                    source: id.clone(),
+                    event: Event::Other(format!("{:?}", event)),
+                });
+            }
+        }
+    }
 
     fn discord(&self) -> SourceResult<&Discord> {
         match self.state {
