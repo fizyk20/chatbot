@@ -16,6 +16,12 @@
 				"token": "insert-token-here"
 			}
 		},
+		"discord": {
+			"source_type": "Discord",
+			"config": {
+				"token": "insert-token-here"
+			}
+		},
 		"stdin": {
 			"source_type": "Stdin"
 		}
@@ -41,10 +47,10 @@
 				"slack": ["TextMessage"]
 			},
 			"config": {
-				"source1": "IRC-Freenode",
-				"channel1": "#test",
-				"source2": "slack",
-				"channel2": "freenode"
+				"endpoints": [
+					{ "source": "IRC-Freenode", "channel": "#test" },
+					{ "source": "slack", "channel": "freenode" }
+				]
 			}
 		}
 	}
