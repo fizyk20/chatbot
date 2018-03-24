@@ -3,10 +3,12 @@ use irc::error::Error as IrcError;
 use serde_json::Value;
 use std::sync::mpsc::Sender;
 
+pub mod discord;
 pub mod irc;
 pub mod stdin;
 pub mod slack;
 
+pub use self::discord::DiscordSource;
 pub use self::irc::IrcSource;
 pub use self::slack::SlackSource;
 pub use self::stdin::StdinSource;

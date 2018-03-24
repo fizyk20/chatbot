@@ -15,3 +15,4 @@ timer = "0.2"
 irc = "0.12"
 slack = { git = "https://github.com/fizyk20/slack-rs.git", branch = "less-blocking-reads" }
 slack_api = "0.18"
+discord = { git = "https://github.com/tinaun/discord-rs.git", branch = "async_internals" }

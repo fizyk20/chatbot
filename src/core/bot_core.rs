@@ -56,6 +56,11 @@ impl BotCore {
                         sender.clone(),
                         def.config.clone(),
                     )),
+                    SourceType::Discord => Box::new(DiscordSource::build_source(
+                        source_id.clone(),
+                        sender.clone(),
+                        def.config.clone(),
+                    )),
                     _ => unreachable!(),
                 };
                 sources.insert(source_id, source);
