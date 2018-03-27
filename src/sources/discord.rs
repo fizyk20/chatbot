@@ -135,18 +135,28 @@ impl DiscordSource {
                 if msg.author.id == state.user().id {
                     return;
                 }
-                let channel = match state
+                let (author, channel) = match state
                     .find_channel(msg.channel_id)
                     .expect("Message from an unknown channel")
                 {
-                    Private(prv) => Channel::User(prv.recipient.name.clone()),
-                    Public(_, publ) => Channel::Channel(publ.name.clone()),
+                    Private(prv) => (
+                        prv.recipient.name.to_owned(),
+                        Channel::User(prv.recipient.name.clone()),
+                    ),
+                    Public(srv, publ) => {
+                        let member = srv.members
+                            .iter()
+                            .find(|m| m.user.id == msg.author.id)
+                            .map(|m| m.display_name().to_owned())
+                            .unwrap_or(msg.author.name.to_owned());
+                        (member, Channel::Channel(publ.name.to_owned()))
+                    }
                     _ => {
                         return;
                     }
                 };
                 let msg = Message {
-                    author: msg.author.name,
+                    author,
                     channel,
                     content: MessageContent::Text(msg.content),
                 };
