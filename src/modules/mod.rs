@@ -1,27 +1,34 @@
-use core::{BotCoreAPI, SourceEvent};
-use serde_json::Value;
-
 mod randomchat;
 mod msg_pipe;
 
 pub use self::msg_pipe::MsgPipe;
 pub use self::randomchat::RandomChat;
+use config::CONFIG;
+use universal_chat::{Channel, Message, MessageContent};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ResumeEventHandling {
-    Stop,
-    Resume,
+#[derive(Clone, Debug)]
+pub struct Command {
+    pub sender: String,
+    pub channel: Channel,
+    pub params: Vec<String>,
 }
 
-pub trait Module {
-    fn create(id: String, config: Option<Value>) -> Self
-    where
-        Self: Sized;
-    fn handle_event(&mut self, core: &mut BotCoreAPI, event: SourceEvent) -> ResumeEventHandling;
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum ModuleType {
-    RandomChat,
-    MsgPipe,
+impl Command {
+    fn from_msg<'a>(msg: &'a Message) -> Option<Command> {
+        if let MessageContent::Text(txt) = msg.content.clone() {
+            let cmd_char = CONFIG.lock().unwrap().custom.command_char.clone();
+            if !txt.starts_with(&cmd_char) {
+                return None;
+            }
+            let text = &txt[cmd_char.len()..];
+            let words = text.split(" ");
+            Some(Command {
+                sender: msg.author.clone(),
+                channel: msg.channel.clone(),
+                params: words.into_iter().map(str::to_owned).collect(),
+            })
+        } else {
+            None
+        }
+    }
 }

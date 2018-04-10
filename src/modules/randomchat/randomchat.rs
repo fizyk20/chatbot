@@ -1,10 +1,11 @@
 use super::dictionary::Dictionary;
 use chrono::Duration;
 use config::CONFIG;
-use core::{BotCoreAPI, Command, Event, Message, MessageContent, SourceEvent, SourceId};
-use modules::{Module, ResumeEventHandling};
+use modules::Command;
 use rand::{self, Rng};
 use serde_json::{self, Value};
+use universal_chat::{CoreAPI, Event, Message, MessageContent, Module, ResumeEventHandling,
+                     SourceEvent, SourceId};
 
 pub struct RandomChat {
     module_id: String,
@@ -16,7 +17,7 @@ pub struct RandomChat {
 }
 
 impl RandomChat {
-    fn init_timer(&mut self, core: &mut BotCoreAPI) {
+    fn init_timer(&mut self, core: &mut CoreAPI) {
         core.schedule_timer(self.module_id.clone(), Duration::minutes(10));
         self.timer_initialised = true;
     }
@@ -29,27 +30,29 @@ struct RandomChatConfig {
     dictionary_path: Option<String>,
 }
 
-impl Module for RandomChat {
-    fn create(id: String, config: Option<Value>) -> RandomChat {
+impl RandomChat {
+    pub fn create(id: String, config: Option<Value>) -> Box<Module> {
         let config: RandomChatConfig = serde_json::from_value(config.unwrap()).unwrap();
         let dict_path = config
             .dictionary_path
             .unwrap_or("dictionary.dat".to_owned());
         let dict = Dictionary::load(&dict_path).unwrap();
-        RandomChat {
+        Box::new(RandomChat {
             module_id: id,
             dict,
             dict_path,
             enabled: config.enabled,
             probability: config.probability,
             timer_initialised: false,
-        }
+        })
     }
+}
 
-    fn handle_event(&mut self, core: &mut BotCoreAPI, event: SourceEvent) -> ResumeEventHandling {
+impl Module for RandomChat {
+    fn handle_event(&mut self, core: &mut CoreAPI, event: SourceEvent) -> ResumeEventHandling {
         let SourceEvent { source, event } = event;
         match event {
-            Event::ReceivedMessage(msg) => if let Some(cmd) = msg.parse_command() {
+            Event::ReceivedMessage(msg) => if let Some(cmd) = Command::from_msg(&msg) {
                 self.handle_command(core, source, cmd)
             } else {
                 self.handle_message(core, source, msg)
@@ -63,7 +66,7 @@ impl Module for RandomChat {
 impl RandomChat {
     fn handle_message(
         &mut self,
-        core: &mut BotCoreAPI,
+        core: &mut CoreAPI,
         src: SourceId,
         msg: Message,
     ) -> ResumeEventHandling {
@@ -94,7 +97,7 @@ impl RandomChat {
 
     fn handle_command(
         &mut self,
-        core: &mut BotCoreAPI,
+        core: &mut CoreAPI,
         src: SourceId,
         command: Command,
     ) -> ResumeEventHandling {
@@ -181,7 +184,7 @@ impl RandomChat {
         }
     }
 
-    fn handle_timer(&mut self, core: &mut BotCoreAPI, id: String) -> ResumeEventHandling {
+    fn handle_timer(&mut self, core: &mut CoreAPI, id: String) -> ResumeEventHandling {
         if id == self.module_id {
             let _ = self.dict.save(&self.dict_path);
             self.init_timer(core);

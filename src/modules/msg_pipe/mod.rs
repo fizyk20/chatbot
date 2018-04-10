@@ -1,6 +1,6 @@
-use core::{BotCoreAPI, Channel, Event, Message, MessageContent, SourceEvent, SourceId};
-use modules::{Module, ResumeEventHandling};
 use serde_json::{self, Value};
+use universal_chat::{Channel, CoreAPI, Event, Message, MessageContent, Module,
+                     ResumeEventHandling, SourceEvent, SourceId};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct Endpoint {
@@ -13,12 +13,15 @@ pub struct MsgPipe {
     endpoints: Vec<Endpoint>,
 }
 
-impl Module for MsgPipe {
-    fn create(_: String, config: Option<Value>) -> MsgPipe {
-        serde_json::from_value(config.unwrap()).unwrap()
+impl MsgPipe {
+    pub fn create(_: String, config: Option<Value>) -> Box<Module> {
+        let m: Self = serde_json::from_value(config.unwrap()).unwrap();
+        Box::new(m)
     }
+}
 
-    fn handle_event(&mut self, core: &mut BotCoreAPI, event: SourceEvent) -> ResumeEventHandling {
+impl Module for MsgPipe {
+    fn handle_event(&mut self, core: &mut CoreAPI, event: SourceEvent) -> ResumeEventHandling {
         if let Event::ReceivedMessage(msg) = event.event {
             if let MessageContent::Text(txt) = msg.content {
                 let new_content = format!("[{}]: {}", msg.author, txt);
