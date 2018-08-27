@@ -1,7 +1,9 @@
 mod msg_pipe;
+mod patterns;
 mod randomchat;
 
 pub use self::msg_pipe::MsgPipe;
+pub use self::patterns::Patterns;
 pub use self::randomchat::RandomChat;
 use config::CONFIG;
 use universal_chat::{Channel, Message, MessageContent};
