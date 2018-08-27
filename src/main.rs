@@ -8,8 +8,8 @@ extern crate serde_json;
 #[macro_use]
 extern crate universal_chat;
 
-mod modules;
 mod config;
+mod modules;
 
 use config::CONFIG;
 use modules::{MsgPipe, RandomChat};

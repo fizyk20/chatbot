@@ -1,6 +1,8 @@
 use serde_json::{self, Value};
-use universal_chat::{Channel, CoreAPI, Event, Message, MessageContent, Module,
-                     ResumeEventHandling, SourceEvent, SourceId};
+use universal_chat::{
+    Channel, CoreAPI, Event, Message, MessageContent, Module, ResumeEventHandling, SourceEvent,
+    SourceId,
+};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct Endpoint {

@@ -4,8 +4,9 @@ use config::CONFIG;
 use modules::Command;
 use rand::{self, Rng};
 use serde_json::{self, Value};
-use universal_chat::{CoreAPI, Event, Message, MessageContent, Module, ResumeEventHandling,
-                     SourceEvent, SourceId};
+use universal_chat::{
+    CoreAPI, Event, Message, MessageContent, Module, ResumeEventHandling, SourceEvent, SourceId,
+};
 
 pub struct RandomChat {
     module_id: String,
