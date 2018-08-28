@@ -1,0 +1,72 @@
+# Example config for the bot
+
+# Folder that will contain all the logs
+log_folder = "logs"
+
+# Custom settings
+[custom]
+command_char = "!"			# Character that will trigger a command
+
+# Example IRC source
+# Note: the format is [source.<source-name>]
+# source-name may be used later in modules configurations
+
+# This IRC source will be called "IRC-Freenode"
+[sources.IRC-Freenode]
+source_type = "Irc"
+
+[sources.IRC-Freenode.config]
+nickname = "IrcBot-test"
+server = "irc.freenode.net"
+channels = ["#test"]
+
+# A Slack source, with name "slack"
+[sources.slack]
+source_type = "Slack"
+
+[sources.slack.config]
+token = "insert-token-here"
+
+# A Discord source, with name "discord"
+[sources.discord]
+source_type = "Discord"
+
+[sources.discord.config]
+token = "insert-token-here"
+
+[sources.stdin]
+source_type = "Stdin"
+
+# Example modules
+# Note: similar to sources, the module names can be arbitrary
+# The format is again [modules.<module-name>]
+
+[modules.randomchat]
+module_type = "RandomChat"
+priority = 0
+
+[modules.randomchat.subscriptions]
+IRC-Freenode = ["TextMessage"]		# Source name used here as a key
+core = ["Timer"]
+
+[modules.randomchat.config]
+enabled = true
+probability = 50
+
+[modules.pipe]
+module_type = "MsgPipe"
+priority = 0
+
+[modules.pipe.subscriptions]
+IRC-Freenode = ["TextMessage"]
+slack = ["TextMessage"]
+
+# For the MsgPipe module, "endpoints" is an array of source/channel tables
+
+[[modules.pipe.config.endpoints]]
+source = "IRC-Freenode"				# Source name used again, as a value this time
+channel = "#test"
+
+[[modules.pipe.config.endpoints]]
+source = "slack"
+channel = "freenode"

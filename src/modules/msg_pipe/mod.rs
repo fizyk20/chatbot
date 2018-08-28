@@ -1,4 +1,4 @@
-use serde_json::{self, Value};
+use toml::Value;
 use universal_chat::{
     Channel, CoreAPI, Event, Message, MessageContent, Module, ResumeEventHandling, SourceEvent,
     SourceId,
@@ -17,7 +17,7 @@ pub struct MsgPipe {
 
 impl MsgPipe {
     pub fn create(_: String, config: Option<Value>) -> Box<Module> {
-        let m: Self = serde_json::from_value(config.unwrap()).unwrap();
+        let m: Self = config.unwrap().try_into().unwrap();
         Box::new(m)
     }
 }

@@ -3,4 +3,4 @@ pub struct BotConfig {
     pub command_char: String,
 }
 
-config!(BotConfig, "config.json");
+config!(BotConfig, "config.toml");

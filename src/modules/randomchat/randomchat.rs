@@ -3,7 +3,7 @@ use chrono::Duration;
 use config::CONFIG;
 use modules::Command;
 use rand::{self, Rng};
-use serde_json::{self, Value};
+use toml::Value;
 use universal_chat::{
     CoreAPI, Event, Message, MessageContent, Module, ResumeEventHandling, SourceEvent, SourceId,
 };
@@ -33,7 +33,7 @@ struct RandomChatConfig {
 
 impl RandomChat {
     pub fn create(id: String, config: Option<Value>) -> Box<Module> {
-        let config: RandomChatConfig = serde_json::from_value(config.unwrap()).unwrap();
+        let config: RandomChatConfig = config.unwrap().try_into().unwrap();
         let dict_path = config
             .dictionary_path
             .unwrap_or("dictionary.dat".to_owned());
@@ -135,7 +135,7 @@ impl RandomChat {
                     .config
                     .as_mut()
                     .map(|ref mut config| {
-                        config["enabled"] = Value::Bool(true);
+                        config["enabled"] = Value::Boolean(true);
                     });
                 core.send(
                     &src,
@@ -156,7 +156,7 @@ impl RandomChat {
                     .config
                     .as_mut()
                     .map(|ref mut config| {
-                        config["enabled"] = Value::Bool(false);
+                        config["enabled"] = Value::Boolean(false);
                     });
                 core.send(
                     &src,

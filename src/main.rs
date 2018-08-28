@@ -4,7 +4,7 @@ extern crate lazy_static;
 extern crate rand;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
+extern crate toml;
 #[macro_use]
 extern crate universal_chat;
 

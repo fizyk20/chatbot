@@ -1,5 +1,5 @@
-mod randomchat;
 mod msg_pipe;
+mod randomchat;
 
 pub use self::msg_pipe::MsgPipe;
 pub use self::randomchat::RandomChat;
