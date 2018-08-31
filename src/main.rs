@@ -25,7 +25,7 @@ fn main() {
     builders.insert("Patterns".to_owned(), Patterns::create);
     // Create a core object
     let mut core = {
-        let config = CONFIG.lock().unwrap();
+        let config = CONFIG.lock().ok().expect("Couldn't lock CONFIG");
         Core::new(&builders, &*config)
     };
     // Connect all event sources

@@ -18,7 +18,13 @@ pub struct Command {
 impl Command {
     fn from_msg<'a>(msg: &'a Message) -> Option<Command> {
         if let MessageContent::Text(txt) = msg.content.clone() {
-            let cmd_char = CONFIG.lock().unwrap().custom.command_char.clone();
+            let cmd_char = CONFIG
+                .lock()
+                .ok()
+                .expect("Couldn't lock CONFIG")
+                .custom
+                .command_char
+                .clone();
             if !txt.starts_with(&cmd_char) {
                 return None;
             }

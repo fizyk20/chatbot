@@ -33,11 +33,17 @@ struct RandomChatConfig {
 
 impl RandomChat {
     pub fn create(id: String, config: Option<Value>) -> Box<Module> {
-        let config: RandomChatConfig = config.unwrap().try_into().unwrap();
+        let config: RandomChatConfig = config
+            .expect("No config passed to RandomChat")
+            .try_into()
+            .ok()
+            .expect("Failed parsing a Value into RandomChatConfig");
         let dict_path = config
             .dictionary_path
             .unwrap_or("dictionary.dat".to_owned());
-        let dict = Dictionary::load(&dict_path).unwrap();
+        let dict = Dictionary::load(&dict_path)
+            .ok()
+            .expect("Dictionary::load failed");
         Box::new(RandomChat {
             module_id: id,
             dict,
@@ -89,7 +95,8 @@ impl RandomChat {
                     channel: msg.channel,
                     content: MessageContent::Text(response),
                 },
-            ).unwrap();
+            ).ok()
+                .expect("core.send() failed");
             ResumeEventHandling::Resume
         } else {
             ResumeEventHandling::Resume
@@ -111,7 +118,8 @@ impl RandomChat {
                     channel: command.channel,
                     content: MessageContent::Text(response),
                 },
-            ).unwrap();
+            ).ok()
+                .expect("core.send() failed");
             ResumeEventHandling::Stop
         } else if command.params[0] == "random" {
             if command.params.len() < 2 {
@@ -122,16 +130,17 @@ impl RandomChat {
                         channel: command.channel,
                         content: MessageContent::Text(format!("Not enough parameters")),
                     },
-                ).unwrap();
+                ).ok()
+                    .expect("core.send() failed");
                 return ResumeEventHandling::Stop;
             }
             if command.params[1] == "enable" {
                 self.enabled = true;
-                let mut config = CONFIG.lock().unwrap();
+                let mut config = CONFIG.lock().ok().expect("Couldn't lock CONFIG");
                 config
                     .modules
                     .get_mut(&self.module_id)
-                    .unwrap()
+                    .expect(&format!("Couldn't find module {:?}", self.module_id))
                     .config
                     .as_mut()
                     .map(|ref mut config| {
@@ -144,15 +153,16 @@ impl RandomChat {
                         channel: command.channel,
                         content: MessageContent::Text(format!("RandomChat enabled.")),
                     },
-                ).unwrap();
+                ).ok()
+                    .expect("core.send() failed");
                 ResumeEventHandling::Stop
             } else if command.params[1] == "disable" {
                 self.enabled = false;
-                let mut config = CONFIG.lock().unwrap();
+                let mut config = CONFIG.lock().ok().expect("Couldn't lock CONFIG");
                 config
                     .modules
                     .get_mut(&self.module_id)
-                    .unwrap()
+                    .expect(&format!("Couldn't find module {:?}", self.module_id))
                     .config
                     .as_mut()
                     .map(|ref mut config| {
@@ -165,7 +175,8 @@ impl RandomChat {
                         channel: command.channel,
                         content: MessageContent::Text(format!("RandomChat disabled.")),
                     },
-                ).unwrap();
+                ).ok()
+                    .expect("core.send() failed");
                 ResumeEventHandling::Stop
             } else {
                 core.send(
@@ -177,7 +188,8 @@ impl RandomChat {
                             format!("Unknown parameter value: {}", command.params[1]).to_string(),
                         ),
                     },
-                ).unwrap();
+                ).ok()
+                    .expect("core.send() failed");
                 ResumeEventHandling::Stop
             }
         } else {

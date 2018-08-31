@@ -17,7 +17,11 @@ pub struct MsgPipe {
 
 impl MsgPipe {
     pub fn create(_: String, config: Option<Value>) -> Box<Module> {
-        let m: Self = config.unwrap().try_into().unwrap();
+        let m: Self = config
+            .expect("No config passed to MsgPipe")
+            .try_into()
+            .ok()
+            .expect("Failed parsing a Value into MsgPipe");
         Box::new(m)
     }
 }
@@ -46,7 +50,9 @@ impl Module for MsgPipe {
                         channel,
                         content: MessageContent::Text(new_content.clone()),
                     };
-                    core.send(&source, message).unwrap();
+                    core.send(&source, message)
+                        .ok()
+                        .expect("core.send() failed");
                 }
             }
         }

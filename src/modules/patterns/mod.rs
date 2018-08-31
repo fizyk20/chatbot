@@ -7,7 +7,8 @@ use universal_chat::{
 };
 
 fn deserialize_regex<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Regex, D::Error> {
-    String::deserialize(deserializer).map(|s| Regex::new(&s).unwrap())
+    String::deserialize(deserializer)
+        .map(|s| Regex::new(&s).ok().expect(&format!("Invalid regex: {}", s)))
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -31,9 +32,10 @@ pub struct Patterns {
 impl Patterns {
     pub fn create(id: String, config: Option<Value>) -> Box<Module> {
         let config: PatternsConfig = config
-            .unwrap()
+            .expect("No config passed to Patterns")
             .try_into()
-            .expect("Config conversion failed in Patterns");
+            .ok()
+            .expect("Failed parsing a Value into PatternsConfig");
         Box::new(Patterns {
             module_id: id,
             enabled: true,
@@ -63,7 +65,8 @@ impl Module for Patterns {
                                     channel: msg.channel.clone(),
                                     content: MessageContent::Text(pattern.response.clone()),
                                 },
-                            ).unwrap();
+                            ).ok()
+                                .expect("core.send() failed");
                         }
                     }
                 }
