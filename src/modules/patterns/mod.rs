@@ -65,8 +65,7 @@ impl Module for Patterns {
                                     channel: msg.channel.clone(),
                                     content: MessageContent::Text(pattern.response.clone()),
                                 },
-                            ).ok()
-                                .expect("core.send() failed");
+                            );
                         }
                     }
                 }

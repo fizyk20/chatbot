@@ -50,9 +50,7 @@ impl Module for MsgPipe {
                         channel,
                         content: MessageContent::Text(new_content.clone()),
                     };
-                    core.send(&source, message)
-                        .ok()
-                        .expect("core.send() failed");
+                    core.send(&source, message);
                 }
             }
         }

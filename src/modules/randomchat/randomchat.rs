@@ -95,8 +95,7 @@ impl RandomChat {
                     channel: msg.channel,
                     content: MessageContent::Text(response),
                 },
-            ).ok()
-                .expect("core.send() failed");
+            );
             ResumeEventHandling::Resume
         } else {
             ResumeEventHandling::Resume
@@ -118,8 +117,7 @@ impl RandomChat {
                     channel: command.channel,
                     content: MessageContent::Text(response),
                 },
-            ).ok()
-                .expect("core.send() failed");
+            );
             ResumeEventHandling::Stop
         } else if command.params[0] == "random" {
             if command.params.len() < 2 {
@@ -130,8 +128,7 @@ impl RandomChat {
                         channel: command.channel,
                         content: MessageContent::Text(format!("Not enough parameters")),
                     },
-                ).ok()
-                    .expect("core.send() failed");
+                );
                 return ResumeEventHandling::Stop;
             }
             if command.params[1] == "enable" {
@@ -153,8 +150,7 @@ impl RandomChat {
                         channel: command.channel,
                         content: MessageContent::Text(format!("RandomChat enabled.")),
                     },
-                ).ok()
-                    .expect("core.send() failed");
+                );
                 ResumeEventHandling::Stop
             } else if command.params[1] == "disable" {
                 self.enabled = false;
@@ -175,8 +171,7 @@ impl RandomChat {
                         channel: command.channel,
                         content: MessageContent::Text(format!("RandomChat disabled.")),
                     },
-                ).ok()
-                    .expect("core.send() failed");
+                );
                 ResumeEventHandling::Stop
             } else {
                 core.send(
@@ -188,8 +183,7 @@ impl RandomChat {
                             format!("Unknown parameter value: {}", command.params[1]).to_string(),
                         ),
                     },
-                ).ok()
-                    .expect("core.send() failed");
+                );
                 ResumeEventHandling::Stop
             }
         } else {
