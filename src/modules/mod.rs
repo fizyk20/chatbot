@@ -1,7 +1,9 @@
+mod eightball;
 mod msg_pipe;
 mod patterns;
 mod randomchat;
 
+pub use self::eightball::Eightball;
 pub use self::msg_pipe::MsgPipe;
 pub use self::patterns::Patterns;
 pub use self::randomchat::RandomChat;

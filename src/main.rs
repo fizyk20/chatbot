@@ -14,7 +14,7 @@ mod config;
 mod modules;
 
 use config::CONFIG;
-use modules::{MsgPipe, Patterns, RandomChat};
+use modules::{Eightball, MsgPipe, Patterns, RandomChat};
 use std::collections::HashMap;
 use universal_chat::{Core, ModuleBuilder};
 
@@ -23,6 +23,7 @@ fn main() {
     builders.insert("MsgPipe".to_owned(), MsgPipe::create);
     builders.insert("RandomChat".to_owned(), RandomChat::create);
     builders.insert("Patterns".to_owned(), Patterns::create);
+    builders.insert("Eightball".to_owned(), Eightball::create);
     // Create a core object
     let mut core = {
         let config = CONFIG.lock().ok().expect("Couldn't lock CONFIG");
