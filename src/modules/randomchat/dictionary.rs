@@ -110,6 +110,7 @@ pub struct Dictionary {
 }
 
 impl Dictionary {
+    #[allow(unused)]
     pub fn new() -> Dictionary {
         Dictionary {
             words: Vec::new(),

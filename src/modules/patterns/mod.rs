@@ -24,6 +24,7 @@ struct PatternsConfig {
 }
 
 pub struct Patterns {
+    #[allow(unused)]
     module_id: String,
     enabled: bool,
     config: PatternsConfig,
